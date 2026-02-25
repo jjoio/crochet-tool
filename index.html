@@ -743,9 +743,10 @@
       if (!p) return;
       addHistorySnapshot(p);
       p.currentRow = clampRow(p.currentRow + 1);
-      p.note = String(noteInput.value || "");
       rowNum.textContent = String(p.currentRow);
       renderHistory(p);
+      noteInput.value = "";
+      p.note = "";
       persist();
     }
 
@@ -754,9 +755,10 @@
       if (!p) return;
       addHistorySnapshot(p);
       p.currentRow = clampRow(p.currentRow - 1);
-      p.note = String(noteInput.value || "");
       rowNum.textContent = String(p.currentRow);
       renderHistory(p);
+      noteInput.value = "";
+      p.note = "";
       persist();
     }
 
