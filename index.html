@@ -63,7 +63,6 @@
         border-radius: 28px;
         border: 1px solid rgba(255, 255, 255, 0.9);
         box-shadow: 0 26px 45px rgba(80, 40, 100, 0.18);
-        padding: calc(10px + var(--safe-top)) 12px calc(12px + var(--safe-bottom));
       }
     }
 
@@ -76,17 +75,32 @@
     }
 
     #listView,
-    #contentView {
+    #patternView,
+    #rowView {
       padding-left: 12px;
       padding-right: 12px;
       overflow: hidden;
     }
 
-    .top {
+    #patternView {
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: none;
+    }
+
+    #patternView::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+      display: none;
+    }
+
+    .top,
+    .content-actions {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
+      min-height: 44px;
       margin-bottom: 10px;
       padding: 4px 2px;
     }
@@ -99,6 +113,30 @@
       border-radius: 999px;
       background: linear-gradient(135deg, #ffd7ea, #e9e0ff);
       box-shadow: var(--shadow);
+      border: 0;
+      color: var(--text);
+    }
+
+    .project-title {
+      text-align: center;
+      font-weight: 1000;
+      font-size: 24px;
+      line-height: 1.2;
+      letter-spacing: 0.3px;
+      margin: -20px 0 8px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .project-title-name {
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .btn {
@@ -122,7 +160,8 @@
     .btn.small { font-size: 13px; padding: 8px 10px; border-radius: 12px; }
     .btn:active { transform: translateY(1px); }
 
-    .list {
+    .list,
+    .history-list {
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -131,11 +170,11 @@
       overflow-y: auto;
       overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
-      touch-action: pan-y;
       scrollbar-width: none;
     }
 
-    .list::-webkit-scrollbar {
+    .list::-webkit-scrollbar,
+    .history-list::-webkit-scrollbar {
       width: 0;
       height: 0;
       display: none;
@@ -185,7 +224,16 @@
       place-items: center;
       font-size: 24px;
       background: linear-gradient(135deg, #ffe2ef, #e8e0ff);
+      overflow: hidden;
       flex: 0 0 auto;
+    }
+
+    .icon img,
+    .icon-picker-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
 
     .meta { flex: 1 1 auto; min-width: 0; }
@@ -193,53 +241,20 @@
     .name {
       font-size: 16px;
       font-weight: 900;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .card-time {
+      flex: 0 0 auto;
+      font-size: 12px;
+      color: #b7acbe;
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      align-self: center;
     }
 
     .row { margin-top: 5px; font-size: 13px; color: var(--muted); }
-
-    .edit-btn {
-      border: 0;
-      border-radius: 12px;
-      padding: 9px 11px;
-      font-weight: 900;
-      color: #fff;
-      background: linear-gradient(135deg, #ff7cbb, #af90ff);
-      box-shadow: var(--shadow);
-      flex: 0 0 auto;
-    }
-
-    .content-top {
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      gap: 8px;
-      padding-top: 6px;
-      margin-bottom: 10px;
-    }
-
-    .content-actions {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      min-height: 44px;
-    }
-
-    .project-title {
-      text-align: center;
-      font-weight: 1000;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      font-size: 25px;
-      line-height: 1.2;
-      letter-spacing: 0.3px;
-      margin-top: -22px;
-      padding: 0;
-    }
 
     .panel {
       border-radius: 22px;
@@ -247,6 +262,75 @@
       border: 1px solid rgba(255, 255, 255, 0.92);
       box-shadow: 0 10px 24px rgba(122, 90, 139, 0.12);
       padding: 14px;
+    }
+
+    .pattern-body {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-bottom: 4px;
+    }
+
+    .label,
+    .history-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 900;
+      color: #4f2852;
+      margin-bottom: 8px;
+    }
+
+    .label small { color: var(--muted); font-size: 12px; font-weight: 700; }
+
+    textarea {
+      width: 100%;
+      min-height: 110px;
+      border-radius: 14px;
+      border: 1px solid #e7d6ff;
+      background: #fff;
+      padding: 11px;
+      font-size: 14px;
+      resize: none;
+      outline: none;
+    }
+
+    #patternText {
+      overflow: hidden;
+    }
+
+    textarea:focus,
+    .dialog-input:focus {
+      border-color: #ff8fc8;
+      box-shadow: 0 0 0 4px rgba(255, 143, 200, 0.14);
+    }
+
+    .pattern-images {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .pattern-image {
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      background: #f9f5ff;
+      cursor: zoom-in;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .pattern-image img {
+      width: 100%;
+      max-height: min(54dvh, 360px);
+      object-fit: contain;
+      display: block;
+      background: rgba(255, 255, 255, 0.5);
+      -webkit-touch-callout: none;
+      -webkit-user-drag: none;
     }
 
     .counter {
@@ -278,72 +362,7 @@
       color: #2c1935;
     }
 
-    .note-panel,
-    .history-panel { margin-top: 10px; }
-
-    .history-panel {
-      display: flex;
-      flex-direction: column;
-      flex: 1 1 auto;
-      min-height: 0;
-    }
-
-    .label {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-weight: 900;
-      color: #4f2852;
-      margin-bottom: 7px;
-    }
-
-    .label small { color: var(--muted); font-size: 12px; font-weight: 700; }
-
-    textarea {
-      width: 100%;
-      min-height: 62px;
-      height: 62px;
-      border-radius: 14px;
-      border: 1px solid #e7d6ff;
-      background: #fff;
-      padding: 11px;
-      font-size: 14px;
-      resize: none;
-      outline: none;
-    }
-
-    textarea:focus {
-      border-color: #ff8fc8;
-      box-shadow: 0 0 0 4px rgba(255, 143, 200, 0.14);
-    }
-
-    .history-title {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 8px;
-      font-weight: 900;
-      color: #4f2852;
-    }
-
-    .history-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      flex: 1 1 auto;
-      min-height: 0;
-      overflow-y: auto;
-      overscroll-behavior: contain;
-      scrollbar-width: none;
-    }
-
-    .history-list::-webkit-scrollbar {
-      width: 0;
-      height: 0;
-      display: none;
-    }
-
-    .history-item {
+    .h-item {
       border-radius: 14px;
       border: 1px solid rgba(255, 255, 255, 0.85);
       background: linear-gradient(135deg, rgba(255, 118, 186, 0.1), rgba(176, 136, 255, 0.1));
@@ -359,7 +378,7 @@
     }
 
     .h-row { font-weight: 900; font-size: 14px; }
-    .h-time { font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .h-time { font-size: 11px; color: #b7acbe; white-space: nowrap; }
     .h-note { font-size: 13px; color: #43364b; white-space: pre-wrap; word-break: break-word; }
     .empty { color: var(--muted); font-size: 13px; }
 
@@ -368,6 +387,7 @@
       left: 50%;
       bottom: calc(14px + var(--safe-bottom));
       transform: translateX(-50%);
+      z-index: 120;
       background: rgba(55, 30, 70, 0.9);
       color: #fff;
       border-radius: 12px;
@@ -423,15 +443,72 @@
       margin-bottom: 12px;
     }
 
-    .dialog-input:focus {
-      border-color: #ff8fc8;
-      box-shadow: 0 0 0 4px rgba(255, 143, 200, 0.14);
-    }
-
     .dialog-actions {
       display: flex;
       justify-content: flex-end;
       gap: 8px;
+    }
+
+    .backup-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .import-mode-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .icon-picker {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .icon-picker-preview {
+      width: 54px;
+      height: 54px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      font-size: 28px;
+      background: linear-gradient(135deg, #ffe2ef, #e8e0ff);
+      cursor: pointer;
+      flex: 0 0 auto;
+    }
+
+    .icon-picker-preview.empty {
+      color: #cfbfd9;
+      font-size: 30px;
+      font-weight: 700;
+    }
+
+    .create-name-input {
+      flex: 1 1 auto;
+      margin-bottom: 0;
+    }
+
+    .photo-viewer {
+      position: relative;
+      width: min(92vw, 520px);
+      max-height: 82dvh;
+      border-radius: 16px;
+      padding: 10px;
+      background: #fff;
+    }
+
+    .photo-viewer img {
+      width: 100%;
+      max-height: calc(82dvh - 54px);
+      object-fit: contain;
+      display: block;
+      border-radius: 12px;
+      background: #f7f2ff;
     }
   </style>
 </head>
@@ -439,20 +516,45 @@
   <main class="phone">
     <section class="view active" id="listView">
       <div class="top">
-        <div class="title">🧶 织毛线</div>
+        <button class="title" id="titleBtn">🧶 织毛线</button>
         <button class="btn small" id="newProjectBtn">+ 新建作品</button>
       </div>
       <div class="list" id="projectList"></div>
     </section>
 
-    <section class="view" id="contentView">
-      <div class="content-top">
-        <div class="content-actions">
-          <button class="btn secondary small" id="backBtn">返回</button>
-          <button class="btn small" id="saveBtn">保存</button>
-        </div>
-        <div class="project-title" id="contentTitle"></div>
+    <section class="view" id="patternView">
+      <div class="content-actions">
+        <button class="btn secondary small" id="patternBackBtn">返回</button>
+        <button class="btn small" id="patternSaveBtn">保存</button>
       </div>
+      <div class="project-title" id="patternTitle"></div>
+
+      <div class="pattern-body">
+        <div class="panel">
+          <div class="label">
+            <span>图解内容</span>
+            <button class="btn secondary small" id="patternUploadBtn">上传图片</button>
+          </div>
+          <textarea id="patternText" placeholder="输入图解文字内容..."></textarea>
+          <input id="patternImageInput" type="file" accept="image/*" multiple hidden>
+          <div class="pattern-images" id="patternImages"></div>
+        </div>
+
+        <div class="panel">
+          <div class="label">
+            <span>行数记录</span>
+          </div>
+          <button class="btn" id="startRowBtn" style="width:100%;">开始行数记录</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="rowView">
+      <div class="content-actions">
+        <button class="btn secondary small" id="rowBackBtn">返回</button>
+        <button class="btn small" id="saveBtn">保存</button>
+      </div>
+      <div class="project-title" id="rowTitle"></div>
 
       <div class="panel">
         <div class="counter">
@@ -462,12 +564,12 @@
         </div>
       </div>
 
-      <div class="panel note-panel">
+      <div class="panel" style="margin-top:10px;">
         <div class="label">备注</div>
-        <textarea id="noteInput" placeholder="例如：第18行换色；第22行加针"></textarea>
+        <textarea id="noteInput" placeholder="例如：第18行换色；第22行加针" style="min-height:62px;height:62px;"></textarea>
       </div>
 
-      <div class="panel history-panel">
+      <div class="panel" style="margin-top:10px;display:flex;flex-direction:column;flex:1 1 auto;min-height:0;">
         <div class="history-title">
           <span>记录</span>
           <button class="btn secondary small" id="clearHistoryBtn">清空</button>
@@ -479,10 +581,10 @@
   </main>
 
   <div class="toast" id="toast"></div>
+
   <div class="dialog-mask" id="dialogMask" aria-hidden="true">
     <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
       <div class="dialog-title" id="dialogTitle"></div>
-      <input class="dialog-input" id="dialogInput" type="text" />
       <div class="dialog-actions">
         <button class="btn secondary small" id="dialogCancelBtn">取消</button>
         <button class="btn small" id="dialogConfirmBtn">确定</button>
@@ -490,17 +592,90 @@
     </div>
   </div>
 
+  <div class="dialog-mask" id="createMask" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="createTitle">
+      <div class="dialog-title" id="createTitle">新建作品</div>
+      <div class="icon-picker">
+        <div class="icon-picker-preview empty" id="createIconPreview" role="button" tabindex="0" aria-label="上传图标">+</div>
+        <input class="dialog-input create-name-input" id="createNameInput" type="text" placeholder="请输入作品名称" />
+      </div>
+      <input id="createIconInput" type="file" accept="image/*" hidden>
+      <div class="dialog-actions">
+        <button class="btn secondary small" id="createCancelBtn">取消</button>
+        <button class="btn small" id="createConfirmBtn">创建</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="dialog-mask" id="photoViewerMask" aria-hidden="true">
+    <div class="photo-viewer">
+      <img id="photoViewerImage" alt="图解大图">
+    </div>
+  </div>
+
+  <div class="dialog-mask" id="backupMask" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="backupTitle">
+      <div class="dialog-title" id="backupTitle">数据备份</div>
+      <div class="backup-actions">
+        <button class="btn secondary" id="backupExportBtn">导出备份</button>
+        <button class="btn secondary" id="backupImportBtn">导入备份</button>
+      </div>
+      <div class="dialog-actions" style="margin-top:12px;">
+        <button class="btn small" id="backupCloseBtn">关闭</button>
+      </div>
+    </div>
+  </div>
+  <div class="dialog-mask" id="importModeMask" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="importModeTitle">
+      <div class="dialog-title" id="importModeTitle">请选择导入方式</div>
+      <div class="import-mode-actions">
+        <button class="btn secondary" id="importMergeBtn">合并数据</button>
+        <button class="btn danger" id="importOverwriteBtn">覆盖数据</button>
+      </div>
+      <div class="dialog-actions" style="margin-top:12px;">
+        <button class="btn small" id="importModeCancelBtn">取消</button>
+      </div>
+    </div>
+  </div>
+  <input id="importInput" type="file" accept="application/json,.json" hidden>
+
   <script>
-    const STORAGE_KEY = "crochet_projects_v2";
+    const STORAGE_KEY = "crochet_projects_v3";
+    const DEFAULT_PATTERN_TEXT = "🪡 针号：\n🧶 线材：";
+    const LEGACY_DEFAULT_PATTERN_TEXT = "🪡针号：\n🧶线材：";
+    const IMAGE_DB_NAME = "crochet_media_v1";
+    const IMAGE_DB_VERSION = 1;
+    const IMAGE_STORE = "pattern_images";
 
     const listView = document.getElementById("listView");
-    const contentView = document.getElementById("contentView");
-    const projectList = document.getElementById("projectList");
-    const newProjectBtn = document.getElementById("newProjectBtn");
+    const patternView = document.getElementById("patternView");
+    const rowView = document.getElementById("rowView");
 
-    const backBtn = document.getElementById("backBtn");
+    const projectList = document.getElementById("projectList");
+    const titleBtn = document.getElementById("titleBtn");
+    const newProjectBtn = document.getElementById("newProjectBtn");
+    const backupMask = document.getElementById("backupMask");
+    const backupExportBtn = document.getElementById("backupExportBtn");
+    const backupImportBtn = document.getElementById("backupImportBtn");
+    const backupCloseBtn = document.getElementById("backupCloseBtn");
+    const importModeMask = document.getElementById("importModeMask");
+    const importMergeBtn = document.getElementById("importMergeBtn");
+    const importOverwriteBtn = document.getElementById("importOverwriteBtn");
+    const importModeCancelBtn = document.getElementById("importModeCancelBtn");
+    const importInput = document.getElementById("importInput");
+
+    const patternBackBtn = document.getElementById("patternBackBtn");
+    const patternSaveBtn = document.getElementById("patternSaveBtn");
+    const patternTitle = document.getElementById("patternTitle");
+    const patternText = document.getElementById("patternText");
+    const patternUploadBtn = document.getElementById("patternUploadBtn");
+    const patternImageInput = document.getElementById("patternImageInput");
+    const patternImages = document.getElementById("patternImages");
+    const startRowBtn = document.getElementById("startRowBtn");
+
+    const rowBackBtn = document.getElementById("rowBackBtn");
     const saveBtn = document.getElementById("saveBtn");
-    const contentTitle = document.getElementById("contentTitle");
+    const rowTitle = document.getElementById("rowTitle");
     const rowNum = document.getElementById("rowNum");
     const plusBtn = document.getElementById("plusBtn");
     const minusBtn = document.getElementById("minusBtn");
@@ -508,24 +683,48 @@
     const clearHistoryBtn = document.getElementById("clearHistoryBtn");
     const historyList = document.getElementById("historyList");
     const historyEmpty = document.getElementById("historyEmpty");
+
     const toastEl = document.getElementById("toast");
+
     const dialogMask = document.getElementById("dialogMask");
     const dialogTitle = document.getElementById("dialogTitle");
-    const dialogInput = document.getElementById("dialogInput");
     const dialogCancelBtn = document.getElementById("dialogCancelBtn");
     const dialogConfirmBtn = document.getElementById("dialogConfirmBtn");
+
+    const createMask = document.getElementById("createMask");
+    const createTitle = document.getElementById("createTitle");
+    const createIconPreview = document.getElementById("createIconPreview");
+    const createNameInput = document.getElementById("createNameInput");
+    const createIconInput = document.getElementById("createIconInput");
+    const createCancelBtn = document.getElementById("createCancelBtn");
+    const createConfirmBtn = document.getElementById("createConfirmBtn");
+    const photoViewerMask = document.getElementById("photoViewerMask");
+    const photoViewerImage = document.getElementById("photoViewerImage");
 
     const icons = ["🧶", "🧵", "🎀", "🌸", "🍓", "🐰", "✨", "🩷", "🪡"];
 
     let projects = loadProjects();
-    if (normalizeProjectNames(projects)) {
-      persist();
-    }
+    if (normalizeProjects(projects)) persist();
 
     let currentId = null;
     let openedSwipeId = null;
     let globalPointerBound = false;
     let storageErrorNotified = false;
+    let activeDialogResolver = null;
+    let pendingCreateIconFile = null;
+    let pendingCreateIconPreviewUrl = "";
+    let createDialogMode = "create";
+    let createDialogEditingId = null;
+    let longPressTimer = null;
+    let longPressTarget = null;
+    let suppressImageClickUntil = 0;
+    let imageDbPromise = null;
+    let patternRenderToken = 0;
+    let listIconHydrateToken = 0;
+    let patternObjectUrls = [];
+    let listIconObjectUrls = [];
+    let viewerObjectUrl = "";
+    let importModeResolver = null;
 
     function uid() {
       return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -534,58 +733,23 @@
     function nowText() {
       const d = new Date();
       const p = n => String(n).padStart(2, "0");
-      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+      return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+    }
+
+    function nowMinuteText() {
+      const d = new Date();
+      const p = n => String(n).padStart(2, "0");
+      return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())}`;
+    }
+
+    function formatCreatedAtText(v) {
+      return String(v || "").replaceAll("-", "/").split(" ")[0];
     }
 
     function showToast(text) {
       toastEl.textContent = text;
       toastEl.classList.add("show");
       setTimeout(() => toastEl.classList.remove("show"), 900);
-    }
-
-    let activeDialogResolver = null;
-    let activeDialogType = "confirm";
-
-    function closeDialog(result) {
-      if (!activeDialogResolver) return;
-      const resolver = activeDialogResolver;
-      activeDialogResolver = null;
-      dialogMask.classList.remove("show");
-      dialogMask.setAttribute("aria-hidden", "true");
-      resolver(result);
-    }
-
-    function openConfirmDialog(message, confirmText = "确定") {
-      if (activeDialogResolver) return Promise.resolve(null);
-      return new Promise(resolve => {
-        activeDialogType = "confirm";
-        activeDialogResolver = resolve;
-        dialogTitle.textContent = message;
-        dialogInput.style.display = "none";
-        dialogInput.value = "";
-        dialogConfirmBtn.textContent = confirmText;
-        dialogMask.classList.add("show");
-        dialogMask.setAttribute("aria-hidden", "false");
-        dialogConfirmBtn.focus();
-      });
-    }
-
-    function openPromptDialog(message, defaultValue = "") {
-      if (activeDialogResolver) return Promise.resolve(null);
-      return new Promise(resolve => {
-        activeDialogType = "prompt";
-        activeDialogResolver = resolve;
-        dialogTitle.textContent = message;
-        dialogInput.style.display = "block";
-        dialogInput.value = defaultValue;
-        dialogConfirmBtn.textContent = "确定";
-        dialogMask.classList.add("show");
-        dialogMask.setAttribute("aria-hidden", "false");
-        requestAnimationFrame(() => {
-          dialogInput.focus();
-          dialogInput.select();
-        });
-      });
     }
 
     function escapeHtml(v) {
@@ -603,6 +767,174 @@
       return null;
     }
 
+    function idbRequest(req) {
+      return new Promise((resolve, reject) => {
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error || new Error("IndexedDB 请求失败"));
+      });
+    }
+
+    function getImageDb() {
+      if (imageDbPromise) return imageDbPromise;
+      imageDbPromise = new Promise((resolve, reject) => {
+        if (!("indexedDB" in window)) {
+          reject(new Error("当前浏览器不支持 IndexedDB"));
+          return;
+        }
+        const req = indexedDB.open(IMAGE_DB_NAME, IMAGE_DB_VERSION);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(IMAGE_STORE)) {
+            db.createObjectStore(IMAGE_STORE, { keyPath: "id" });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error || new Error("打开 IndexedDB 失败"));
+      });
+      return imageDbPromise;
+    }
+
+    function isImageDbRef(v) {
+      return typeof v === "string" && v.startsWith("imgdb:");
+    }
+
+    function isLegacyDataUrl(v) {
+      return typeof v === "string" && v.startsWith("data:image");
+    }
+
+    async function saveImageBlobToDb(blob) {
+      const db = await getImageDb();
+      const id = `imgdb:${uid()}`;
+      const tx = db.transaction(IMAGE_STORE, "readwrite");
+      await idbRequest(tx.objectStore(IMAGE_STORE).put({ id, blob }));
+      return id;
+    }
+
+    async function getImageBlobFromDb(id) {
+      const db = await getImageDb();
+      const tx = db.transaction(IMAGE_STORE, "readonly");
+      const row = await idbRequest(tx.objectStore(IMAGE_STORE).get(id));
+      return row && row.blob ? row.blob : null;
+    }
+
+    async function deleteImageFromDb(id) {
+      const db = await getImageDb();
+      const tx = db.transaction(IMAGE_STORE, "readwrite");
+      await idbRequest(tx.objectStore(IMAGE_STORE).delete(id));
+    }
+
+    async function putImageBlobToDb(id, blob) {
+      const db = await getImageDb();
+      const tx = db.transaction(IMAGE_STORE, "readwrite");
+      await idbRequest(tx.objectStore(IMAGE_STORE).put({ id, blob }));
+    }
+
+    async function getAllImageIdsFromDb() {
+      const db = await getImageDb();
+      const tx = db.transaction(IMAGE_STORE, "readonly");
+      const keys = await idbRequest(tx.objectStore(IMAGE_STORE).getAllKeys());
+      return Array.isArray(keys) ? keys.map(v => String(v)) : [];
+    }
+
+    function blobToDataUrl(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(new Error("图片编码失败"));
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    async function dataUrlToBlob(dataUrl) {
+      const res = await fetch(dataUrl);
+      return res.blob();
+    }
+
+    async function migrateLegacyPatternImages() {
+      let migrated = 0;
+      let failed = 0;
+
+      for (const p of projects) {
+        const images = Array.isArray(p.patternImages) ? p.patternImages : [];
+        for (let i = 0; i < images.length; i += 1) {
+          const legacyRef = images[i];
+          if (!isLegacyDataUrl(legacyRef)) continue;
+          try {
+            const res = await fetch(legacyRef);
+            const blob = await res.blob();
+            const newRef = await saveImageBlobToDb(blob);
+            images[i] = newRef;
+            if (!persist()) {
+              images[i] = legacyRef;
+              try { await deleteImageFromDb(newRef); } catch {}
+              failed += 1;
+              continue;
+            }
+            migrated += 1;
+          } catch {
+            failed += 1;
+          }
+        }
+      }
+
+      if (migrated > 0) {
+        showToast(`已优化 ${migrated} 张历史图片`);
+        const p = currentProject();
+        if (p && patternView.classList.contains("active")) renderPatternImages(p);
+      } else if (failed > 0) {
+        showToast("历史图片迁移失败，请清理浏览器站点数据后重试");
+      }
+    }
+
+    async function migrateLegacyProjectIcons() {
+      let migrated = 0;
+      for (const p of projects) {
+        if (p.iconType !== "image" || !isLegacyDataUrl(p.iconValue)) continue;
+        try {
+          const res = await fetch(p.iconValue);
+          const blob = await res.blob();
+          const newRef = await saveImageBlobToDb(blob);
+          const oldRef = p.iconValue;
+          p.iconValue = newRef;
+          if (!persist()) {
+            p.iconValue = oldRef;
+            try { await deleteImageFromDb(newRef); } catch {}
+            continue;
+          }
+          migrated += 1;
+        } catch {}
+      }
+      if (migrated > 0) {
+        renderList();
+        showToast(`已优化 ${migrated} 个历史图标`);
+      }
+    }
+
+    function releaseListIconObjectUrls() {
+      for (const url of listIconObjectUrls) URL.revokeObjectURL(url);
+      listIconObjectUrls = [];
+    }
+
+    async function hydrateListIconRefs(token) {
+      const iconImgs = projectList.querySelectorAll("img[data-icon-ref]");
+      for (const img of iconImgs) {
+        if (token !== listIconHydrateToken) return;
+        const ref = img.getAttribute("data-icon-ref");
+        if (!ref || !isImageDbRef(ref)) continue;
+        try {
+          const blob = await getImageBlobFromDb(ref);
+          if (!blob) continue;
+          const url = URL.createObjectURL(blob);
+          if (token !== listIconHydrateToken || !img.isConnected) {
+            URL.revokeObjectURL(url);
+            continue;
+          }
+          listIconObjectUrls.push(url);
+          img.src = url;
+        } catch {}
+      }
+    }
+
     function clampRow(v) {
       const n = Number(v);
       if (!Number.isFinite(n)) return 1;
@@ -615,27 +947,74 @@
       return icons[sum % icons.length];
     }
 
+    function projectIconHtml(project) {
+      if (project.iconType === "image" && project.iconValue) {
+        if (isLegacyDataUrl(project.iconValue)) {
+          return `<img src="${escapeHtml(project.iconValue)}" alt="图标">`;
+        }
+        if (isImageDbRef(project.iconValue)) {
+          return `<img data-icon-ref="${escapeHtml(project.iconValue)}" alt="图标">`;
+        }
+      }
+      return escapeHtml(project.iconValue || "🧶");
+    }
+
+    function projectTitleHtml(project) {
+      const name = escapeHtml(project.name || "未命名项目");
+      return `<span class="project-title-name">${name}</span>`;
+    }
+
     function loadProjects() {
       try {
-        const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-        return Array.isArray(data) ? data : [];
+        const latest = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        return Array.isArray(latest) ? latest : [];
       } catch {
         return [];
       }
     }
 
-    function normalizeProjectNames(list) {
+    function normalizeProjects(list) {
       if (!Array.isArray(list)) return false;
       let changed = false;
       for (const p of list) {
         if (!p || typeof p !== "object") continue;
-        const oldName = String(p.name || "");
-        let newName = oldName;
-        if (oldName === "我的钩织项目" || oldName === "新的钩织项目" || oldName === "编织作品" || oldName === "钩织作品") {
-          newName = "作品 1";
+
+        if (!p.iconType) {
+          p.iconType = (typeof p.icon === "string" && p.icon.startsWith("data:image")) ? "image" : "emoji";
+          p.iconValue = p.icon || iconByName(String(p.name || ""));
+          changed = true;
         }
-        if (newName !== oldName) {
-          p.name = newName;
+
+        if (typeof p.iconValue !== "string" || !p.iconValue) {
+          p.iconType = "emoji";
+          p.iconValue = iconByName(String(p.name || ""));
+          changed = true;
+        }
+
+        if (!Array.isArray(p.patternImages)) {
+          p.patternImages = [];
+          changed = true;
+        }
+
+        if (typeof p.patternText !== "string") {
+          p.patternText = DEFAULT_PATTERN_TEXT;
+          changed = true;
+        }
+        if (p.patternText === LEGACY_DEFAULT_PATTERN_TEXT) {
+          p.patternText = DEFAULT_PATTERN_TEXT;
+          changed = true;
+        }
+
+        if (!Array.isArray(p.history)) {
+          p.history = [];
+          changed = true;
+        }
+
+        p.currentRow = clampRow(p.currentRow);
+        p.note = String(p.note || "");
+        p.name = String(p.name || "未命名项目");
+        if (typeof p.createdAt !== "string" || !p.createdAt.trim()) {
+          p.createdAt = nowMinuteText();
           changed = true;
         }
       }
@@ -660,23 +1039,357 @@
       return projects.find(p => p.id === currentId) || null;
     }
 
+    function switchView(view) {
+      [listView, patternView, rowView].forEach(v => v.classList.remove("active"));
+      view.classList.add("active");
+    }
+
     function toListView() {
-      contentView.classList.remove("active");
-      listView.classList.add("active");
+      switchView(listView);
       currentId = null;
+      patternRenderToken += 1;
+      releasePatternObjectUrls();
+      closePhotoViewer();
+      closeOpenedSwipe();
       renderList();
     }
 
-    function toContentView(id) {
+    function toPatternView(id) {
       const p = projects.find(i => i.id === id);
       if (!p) return;
       currentId = id;
-      listView.classList.remove("active");
-      contentView.classList.add("active");
-      contentTitle.textContent = `${p.icon} ${p.name}`;
+      switchView(patternView);
+      patternTitle.innerHTML = projectTitleHtml(p);
+      patternText.value = p.patternText || DEFAULT_PATTERN_TEXT;
+      autoResizePatternText();
+      renderPatternImages(p);
+    }
+
+    function toRowView() {
+      const p = currentProject();
+      if (!p) return;
+      closePhotoViewer();
+      switchView(rowView);
+      rowTitle.innerHTML = projectTitleHtml(p);
       rowNum.textContent = String(clampRow(p.currentRow));
       noteInput.value = p.note || "";
       renderHistory(p);
+    }
+
+    function releasePatternObjectUrls() {
+      for (const url of patternObjectUrls) URL.revokeObjectURL(url);
+      patternObjectUrls = [];
+    }
+
+    async function resolveImageSrc(ref) {
+      if (isLegacyDataUrl(ref)) return ref;
+      if (!isImageDbRef(ref)) return "";
+      const blob = await getImageBlobFromDb(ref);
+      if (!blob) return "";
+      const url = URL.createObjectURL(blob);
+      patternObjectUrls.push(url);
+      return url;
+    }
+
+    async function renderPatternImages(project) {
+      const images = Array.isArray(project.patternImages) ? project.patternImages : [];
+      const token = ++patternRenderToken;
+      releasePatternObjectUrls();
+      patternImages.innerHTML = "";
+
+      for (let index = 0; index < images.length; index += 1) {
+        const ref = images[index];
+        const div = document.createElement("div");
+        div.className = "pattern-image";
+        div.dataset.ref = String(ref || "");
+        div.dataset.index = String(index);
+        patternImages.appendChild(div);
+
+        try {
+          const src = await resolveImageSrc(ref);
+          if (token !== patternRenderToken) return;
+          if (!src) {
+            div.remove();
+            continue;
+          }
+          div.innerHTML = `<img src="${escapeHtml(src)}" alt="图解图片">`;
+        } catch {
+          div.remove();
+        }
+      }
+    }
+
+    async function openPhotoViewer(ref) {
+      if (viewerObjectUrl) {
+        URL.revokeObjectURL(viewerObjectUrl);
+        viewerObjectUrl = "";
+      }
+
+      if (isLegacyDataUrl(ref)) {
+        photoViewerImage.src = ref;
+      } else if (isImageDbRef(ref)) {
+        let blob = null;
+        try {
+          blob = await getImageBlobFromDb(ref);
+        } catch {
+          showToast("图片读取失败");
+          return;
+        }
+        if (!blob) {
+          showToast("图片读取失败");
+          return;
+        }
+        viewerObjectUrl = URL.createObjectURL(blob);
+        photoViewerImage.src = viewerObjectUrl;
+      } else {
+        showToast("图片读取失败");
+        return;
+      }
+
+      photoViewerMask.classList.add("show");
+      photoViewerMask.setAttribute("aria-hidden", "false");
+    }
+
+    function closePhotoViewer() {
+      photoViewerMask.classList.remove("show");
+      photoViewerMask.setAttribute("aria-hidden", "true");
+      photoViewerImage.src = "";
+      if (viewerObjectUrl) {
+        URL.revokeObjectURL(viewerObjectUrl);
+        viewerObjectUrl = "";
+      }
+    }
+
+    function cancelLongPressDelete() {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+      longPressTarget = null;
+    }
+
+    async function requestDeletePatternImage(index) {
+      const p = currentProject();
+      if (!p) return;
+      if (!Number.isInteger(index) || index < 0 || index >= p.patternImages.length) return;
+      const ok = await openConfirmDialog("确定删除这张图片吗？", "删除");
+      if (!ok) return;
+      const removed = p.patternImages[index];
+      p.patternImages.splice(index, 1);
+      if (!persist()) {
+        p.patternImages.splice(index, 0, removed);
+        showToast("删除失败：保存未成功");
+        return;
+      }
+      if (isImageDbRef(removed)) {
+        try {
+          await deleteImageFromDb(removed);
+        } catch {}
+      }
+      renderPatternImages(p);
+      showToast("已删除图片");
+    }
+
+    function autoResizePatternText() {
+      patternText.style.height = "auto";
+      patternText.style.height = `${Math.max(patternText.scrollHeight, 110)}px`;
+    }
+
+    function collectProjectImageRefs(project) {
+      const refs = [];
+      if (project && project.iconType === "image" && isImageDbRef(project.iconValue)) {
+        refs.push(project.iconValue);
+      }
+      const images = project && Array.isArray(project.patternImages) ? project.patternImages : [];
+      for (const ref of images) {
+        if (isImageDbRef(ref)) refs.push(ref);
+      }
+      return refs;
+    }
+
+    function collectAllImageRefs(projectListData) {
+      const refs = new Set();
+      const list = Array.isArray(projectListData) ? projectListData : [];
+      for (const p of list) {
+        for (const ref of collectProjectImageRefs(p)) refs.add(ref);
+      }
+      return Array.from(refs);
+    }
+
+    function backupFileName() {
+      const d = new Date();
+      const p = n => String(n).padStart(2, "0");
+      return `crochet-backup-${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}.json`;
+    }
+
+    function closeImportModeDialog(mode = null) {
+      if (!importModeResolver) return;
+      const resolver = importModeResolver;
+      importModeResolver = null;
+      importModeMask.classList.remove("show");
+      importModeMask.setAttribute("aria-hidden", "true");
+      resolver(mode);
+    }
+
+    function openImportModeDialog() {
+      if (importModeResolver) return Promise.resolve(null);
+      return new Promise(resolve => {
+        importModeResolver = resolve;
+        importModeMask.classList.add("show");
+        importModeMask.setAttribute("aria-hidden", "false");
+      });
+    }
+
+    function remapProjectImageRefs(project, refMap) {
+      if (!project || typeof project !== "object") return;
+      if (project.iconType === "image" && isImageDbRef(project.iconValue) && refMap.has(project.iconValue)) {
+        project.iconValue = refMap.get(project.iconValue);
+      }
+      if (!Array.isArray(project.patternImages)) return;
+      project.patternImages = project.patternImages.map(ref => {
+        if (isImageDbRef(ref) && refMap.has(ref)) return refMap.get(ref);
+        return ref;
+      });
+    }
+
+    function ensureUniqueProjectIds(importedProjects, existingProjects) {
+      const used = new Set(existingProjects.map(p => String(p.id)));
+      for (const p of importedProjects) {
+        if (!p || typeof p !== "object") continue;
+        let id = String(p.id || "");
+        if (!id || used.has(id)) {
+          id = uid();
+          p.id = id;
+        }
+        used.add(id);
+      }
+    }
+
+    async function exportBackup() {
+      const data = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        projects,
+        images: {}
+      };
+
+      const refs = collectAllImageRefs(projects);
+      for (const ref of refs) {
+        if (!isImageDbRef(ref)) continue;
+        try {
+          const blob = await getImageBlobFromDb(ref);
+          if (!blob) continue;
+          data.images[ref] = await blobToDataUrl(blob);
+        } catch {}
+      }
+
+      const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = backupFileName();
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast("备份已导出");
+    }
+
+    async function importBackupFile(file) {
+      let raw = "";
+      try {
+        raw = await file.text();
+      } catch {
+        showToast("导入失败：文件读取失败");
+        return;
+      }
+
+      let parsed = null;
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        showToast("导入失败：JSON 格式错误");
+        return;
+      }
+
+      if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.projects)) {
+        showToast("导入失败：备份格式不正确");
+        return;
+      }
+
+      const mode = await openImportModeDialog();
+      if (!mode) return;
+
+      const importedProjects = JSON.parse(JSON.stringify(parsed.projects));
+      const nextImages = parsed.images && typeof parsed.images === "object" ? parsed.images : {};
+      const requiredRefs = collectAllImageRefs(importedProjects).filter(isImageDbRef);
+      const refMap = new Map();
+      const insertedImageIds = [];
+
+      for (const ref of requiredRefs) {
+        const dataUrl = nextImages[ref];
+        if (typeof dataUrl !== "string" || !dataUrl.startsWith("data:image")) {
+          showToast("导入失败：备份图片不完整");
+          return;
+        }
+      }
+
+      try {
+        for (const oldRef of requiredRefs) {
+          const dataUrl = nextImages[oldRef];
+          const blob = await dataUrlToBlob(dataUrl);
+          const newRef = `imgdb:${uid()}`;
+          await putImageBlobToDb(newRef, blob);
+          refMap.set(oldRef, newRef);
+          insertedImageIds.push(newRef);
+        }
+      } catch {
+        for (const id of insertedImageIds) {
+          try { await deleteImageFromDb(id); } catch {}
+        }
+        showToast("导入失败：图片数据写入失败");
+        return;
+      }
+
+      for (const p of importedProjects) remapProjectImageRefs(p, refMap);
+
+      const prevProjects = projects;
+      let nextProjects = importedProjects;
+      if (mode === "merge") {
+        ensureUniqueProjectIds(importedProjects, projects);
+        nextProjects = projects.concat(importedProjects);
+      }
+
+      projects = nextProjects;
+      if (normalizeProjects(projects)) {
+        // normalizeProjects may fix legacy data; continue to persist below
+      }
+      if (!persist()) {
+        projects = prevProjects;
+        for (const id of insertedImageIds) {
+          try { await deleteImageFromDb(id); } catch {}
+        }
+        showToast("导入失败：本地存储空间不足");
+        return;
+      }
+
+      try {
+        const usedRefs = new Set(collectAllImageRefs(projects));
+        const allIds = await getAllImageIdsFromDb();
+        for (const id of allIds) {
+          if (!usedRefs.has(id)) {
+            try { await deleteImageFromDb(id); } catch {}
+          }
+        }
+      } catch {}
+
+      currentId = null;
+      switchView(listView);
+      closePhotoViewer();
+      releasePatternObjectUrls();
+      renderList();
+      if (mode === "merge") showToast(`导入成功：已合并 ${importedProjects.length} 个作品`);
+      else showToast("导入成功：已覆盖当前数据");
     }
 
     function closeOpenedSwipe(exceptId = null) {
@@ -701,6 +1414,7 @@
       let sy = 0;
       let tracking = false;
       let dragged = false;
+      let wheelDx = 0;
 
       function start(ev) {
         const t = ev.touches ? ev.touches[0] : ev;
@@ -731,9 +1445,29 @@
 
       function end() {
         tracking = false;
-        if (dragged) {
-          front.dataset.ignoreClickUntil = String(Date.now() + 260);
+        if (dragged) front.dataset.ignoreClickUntil = String(Date.now() + 260);
+      }
+
+      function onWheel(ev) {
+        if (!listView.classList.contains("active")) return;
+        if (Math.abs(ev.deltaX) < 2) return;
+        if (Math.abs(ev.deltaX) <= Math.abs(ev.deltaY)) return;
+        if (ev.cancelable) ev.preventDefault();
+
+        wheelDx += ev.deltaX;
+        if (wheelDx > 34) {
+          closeOpenedSwipe(id);
+          wrap.classList.add("open");
+          openedSwipeId = id;
+          wheelDx = 0;
+        } else if (wheelDx < -26) {
+          wrap.classList.remove("open");
+          if (openedSwipeId === id) openedSwipeId = null;
+          wheelDx = 0;
         }
+
+        clearTimeout(front._wheelResetTimer);
+        front._wheelResetTimer = setTimeout(() => { wheelDx = 0; }, 120);
       }
 
       if (window.PointerEvent) {
@@ -746,9 +1480,11 @@
         front.addEventListener("touchmove", move, { passive: false });
         front.addEventListener("touchend", end, { passive: true });
       }
+      front.addEventListener("wheel", onWheel, { passive: false });
     }
 
     function renderList() {
+      releaseListIconObjectUrls();
       projectList.innerHTML = "";
       projects.forEach(project => {
         const wrap = document.createElement("div");
@@ -765,12 +1501,11 @@
         const front = document.createElement("div");
         front.className = "swipe-front";
         front.innerHTML = `
-          <div class="icon">${escapeHtml(project.icon || "🧶")}</div>
+          <div class="icon">${projectIconHtml(project)}</div>
           <div class="meta">
             <div class="name">${escapeHtml(project.name || "未命名项目")}</div>
-            <div class="row">当前行数：<b>${clampRow(project.currentRow)}</b></div>
           </div>
-          <button class="edit-btn" data-act="edit">编辑</button>
+          <div class="card-time">${escapeHtml(formatCreatedAtText(project.createdAt))}</div>
         `;
 
         actions.addEventListener("click", e => {
@@ -784,19 +1519,13 @@
         front.addEventListener("click", e => {
           const ignoreUntil = Number(front.dataset.ignoreClickUntil || 0);
           if (ignoreUntil > Date.now()) return;
-          const btn = findClosest(e.target, "button");
-          if (btn && btn.dataset.act === "edit") {
-            closeOpenedSwipe();
-            toContentView(project.id);
-            return;
-          }
           if (wrap.classList.contains("open")) {
             wrap.classList.remove("open");
             openedSwipeId = null;
             return;
           }
           closeOpenedSwipe();
-          toContentView(project.id);
+          toPatternView(project.id);
         });
 
         attachSwipe(front, wrap, project.id);
@@ -804,6 +1533,8 @@
         wrap.appendChild(front);
         projectList.appendChild(wrap);
       });
+      const token = ++listIconHydrateToken;
+      hydrateListIconRefs(token);
 
       if (!globalPointerBound) {
         document.addEventListener("pointerdown", onGlobalPointerDown, { capture: true });
@@ -811,36 +1542,124 @@
       }
     }
 
-    async function createProject() {
-      const name = await openPromptDialog("请输入项目名称", "");
-      if (name === null) return;
-      const v = name.trim();
-      if (!v) return showToast("项目名不能为空");
-      projects.unshift({
-        id: uid(),
-        name: v,
-        icon: iconByName(v),
-        currentRow: 1,
-        note: "",
-        history: []
-      });
-      persist();
-      renderList();
-      showToast("已新建项目");
+    function setCreateIconPreviewEmpty() {
+      if (pendingCreateIconPreviewUrl) {
+        URL.revokeObjectURL(pendingCreateIconPreviewUrl);
+        pendingCreateIconPreviewUrl = "";
+      }
+      createIconPreview.textContent = "+";
+      createIconPreview.classList.add("empty");
     }
 
-    async function renameProject(id) {
-      const p = projects.find(i => i.id === id);
+    async function setCreateIconPreviewByProject(project) {
+      if (!project || project.iconType !== "image" || !project.iconValue) {
+        setCreateIconPreviewEmpty();
+        return;
+      }
+      if (isLegacyDataUrl(project.iconValue)) {
+        if (pendingCreateIconPreviewUrl) {
+          URL.revokeObjectURL(pendingCreateIconPreviewUrl);
+          pendingCreateIconPreviewUrl = "";
+        }
+        createIconPreview.innerHTML = `<img src="${escapeHtml(project.iconValue)}" alt="图标预览">`;
+        createIconPreview.classList.remove("empty");
+        return;
+      }
+      if (!isImageDbRef(project.iconValue)) {
+        setCreateIconPreviewEmpty();
+        return;
+      }
+      try {
+        const blob = await getImageBlobFromDb(project.iconValue);
+        if (!blob) {
+          setCreateIconPreviewEmpty();
+          return;
+        }
+        if (pendingCreateIconPreviewUrl) URL.revokeObjectURL(pendingCreateIconPreviewUrl);
+        pendingCreateIconPreviewUrl = URL.createObjectURL(blob);
+        createIconPreview.innerHTML = `<img src="${escapeHtml(pendingCreateIconPreviewUrl)}" alt="图标预览">`;
+        createIconPreview.classList.remove("empty");
+      } catch {
+        setCreateIconPreviewEmpty();
+      }
+    }
+
+    function resetCreateDialogState() {
+      pendingCreateIconFile = null;
+      createDialogMode = "create";
+      createDialogEditingId = null;
+      createNameInput.value = "";
+      createIconInput.value = "";
+      setCreateIconPreviewEmpty();
+    }
+
+    function closeCreateDialog() {
+      createMask.classList.remove("show");
+      createMask.setAttribute("aria-hidden", "true");
+      resetCreateDialogState();
+    }
+
+    function openBackupDialog() {
+      backupMask.classList.add("show");
+      backupMask.setAttribute("aria-hidden", "false");
+    }
+
+    function closeBackupDialog() {
+      backupMask.classList.remove("show");
+      backupMask.setAttribute("aria-hidden", "true");
+    }
+
+    function openCreateDialogForCreate() {
+      resetCreateDialogState();
+      createTitle.textContent = "新建作品";
+      createConfirmBtn.textContent = "创建";
+      createMask.classList.add("show");
+      createMask.setAttribute("aria-hidden", "false");
+      requestAnimationFrame(() => createNameInput.focus());
+    }
+
+    async function openCreateDialogForRename(projectId) {
+      const p = projects.find(i => i.id === projectId);
       if (!p) return;
-      const name = await openPromptDialog("请输入新名称", p.name || "");
-      if (name === null) return;
-      const v = name.trim();
-      if (!v) return showToast("项目名不能为空");
-      p.name = v;
-      p.icon = p.icon || iconByName(v);
-      persist();
-      renderList();
-      showToast("已重命名");
+      resetCreateDialogState();
+      createDialogMode = "rename";
+      createDialogEditingId = projectId;
+      createTitle.textContent = "重命名作品";
+      createConfirmBtn.textContent = "保存";
+      createNameInput.value = p.name || "";
+      createMask.classList.add("show");
+      createMask.setAttribute("aria-hidden", "false");
+      await setCreateIconPreviewByProject(p);
+      requestAnimationFrame(() => createNameInput.focus());
+    }
+
+    function closeDialog(result) {
+      if (!activeDialogResolver) return;
+      const resolver = activeDialogResolver;
+      activeDialogResolver = null;
+      dialogMask.classList.remove("show");
+      dialogMask.setAttribute("aria-hidden", "true");
+      resolver(result);
+    }
+
+    function openConfirmDialog(message, confirmText = "确定") {
+      if (activeDialogResolver) return Promise.resolve(null);
+      return new Promise(resolve => {
+        activeDialogResolver = resolve;
+        dialogTitle.textContent = message;
+        dialogConfirmBtn.textContent = confirmText;
+        dialogMask.classList.add("show");
+        dialogMask.setAttribute("aria-hidden", "false");
+        dialogConfirmBtn.focus();
+      });
+    }
+
+    function createProject() {
+      openCreateDialogForCreate();
+    }
+
+    function renameProject(id) {
+      openCreateDialogForRename(id);
     }
 
     async function deleteProject(id) {
@@ -848,8 +1667,17 @@
       if (!p) return;
       const ok = await openConfirmDialog(`确定删除「${p.name}」？`, "删除");
       if (!ok) return;
+      const refsToDelete = collectProjectImageRefs(p);
+      const prevProjects = projects.slice();
       projects = projects.filter(i => i.id !== id);
-      persist();
+      if (!persist()) {
+        projects = prevProjects;
+        showToast("删除失败：本地存储空间不足");
+        return;
+      }
+      for (const ref of refsToDelete) {
+        try { await deleteImageFromDb(ref); } catch {}
+      }
       openedSwipeId = null;
       renderList();
       showToast("已删除");
@@ -861,7 +1689,7 @@
       historyEmpty.style.display = history.length ? "none" : "block";
       history.slice().reverse().forEach(item => {
         const div = document.createElement("div");
-        div.className = "history-item";
+        div.className = "h-item";
         const noteText = String(item.note || "").trim();
         div.innerHTML = `
           <div class="h-top">
@@ -913,9 +1741,27 @@
     function onSave() {
       const p = currentProject();
       if (!p) return;
+      const oldRow = p.currentRow;
+      const oldNote = p.note;
       p.currentRow = clampRow(rowNum.textContent);
       p.note = String(noteInput.value || "");
-      persist();
+      if (!persist()) {
+        p.currentRow = oldRow;
+        p.note = oldNote;
+        return;
+      }
+      showToast("保存成功");
+    }
+
+    function onPatternSave() {
+      const p = currentProject();
+      if (!p) return;
+      const oldText = p.patternText;
+      p.patternText = String(patternText.value || "");
+      if (!persist()) {
+        p.patternText = oldText;
+        return;
+      }
       showToast("保存成功");
     }
 
@@ -924,34 +1770,291 @@
       if (!p) return;
       const ok = await openConfirmDialog("确定清空历史记录吗？", "清空");
       if (!ok) return;
+      const oldHistory = Array.isArray(p.history) ? p.history.slice() : [];
+      const oldRow = p.currentRow;
       p.history = [];
       p.currentRow = 1;
-      persist();
+      if (!persist()) {
+        p.history = oldHistory;
+        p.currentRow = oldRow;
+        renderHistory(p);
+        rowNum.textContent = String(clampRow(oldRow));
+        return;
+      }
       rowNum.textContent = "1";
       renderHistory(p);
       showToast("历史已清空，行数已重置为 1");
     }
 
     newProjectBtn.addEventListener("click", createProject);
-    backBtn.addEventListener("click", () => {
+    titleBtn.addEventListener("click", openBackupDialog);
+    backupExportBtn.addEventListener("click", async () => {
+      await exportBackup();
+      closeBackupDialog();
+    });
+    backupImportBtn.addEventListener("click", () => {
+      closeBackupDialog();
+      importInput.click();
+    });
+    backupCloseBtn.addEventListener("click", closeBackupDialog);
+    backupMask.addEventListener("click", e => {
+      if (e.target === backupMask) closeBackupDialog();
+    });
+    importMergeBtn.addEventListener("click", () => closeImportModeDialog("merge"));
+    importOverwriteBtn.addEventListener("click", () => closeImportModeDialog("overwrite"));
+    importModeCancelBtn.addEventListener("click", () => closeImportModeDialog(null));
+    importModeMask.addEventListener("click", e => {
+      if (e.target === importModeMask) closeImportModeDialog(null);
+    });
+
+    importInput.addEventListener("change", async () => {
+      const file = importInput.files && importInput.files[0];
+      importInput.value = "";
+      if (!file) return;
+      await importBackupFile(file);
+    });
+
+    createIconPreview.addEventListener("click", () => createIconInput.click());
+    createIconPreview.addEventListener("keydown", e => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      e.preventDefault();
+      createIconInput.click();
+    });
+
+    createIconInput.addEventListener("change", async () => {
+      const file = createIconInput.files && createIconInput.files[0];
+      if (!file) return;
+      try {
+        pendingCreateIconFile = file;
+        if (pendingCreateIconPreviewUrl) URL.revokeObjectURL(pendingCreateIconPreviewUrl);
+        pendingCreateIconPreviewUrl = URL.createObjectURL(file);
+        createIconPreview.innerHTML = `<img src="${escapeHtml(pendingCreateIconPreviewUrl)}" alt="图标预览">`;
+        createIconPreview.classList.remove("empty");
+      } catch {
+        showToast("读取图片失败");
+      }
+    });
+
+    createCancelBtn.addEventListener("click", closeCreateDialog);
+
+    createConfirmBtn.addEventListener("click", async () => {
+      const name = createNameInput.value.trim();
+      if (!name) return showToast("项目名不能为空");
+
+      if (createDialogMode === "create") {
+        let newIconRef = "";
+        if (pendingCreateIconFile) {
+          try {
+            newIconRef = await saveImageBlobToDb(pendingCreateIconFile);
+          } catch {
+            showToast("创建失败：图标保存失败");
+            return;
+          }
+        }
+
+        const nextProject = {
+          id: uid(),
+          name,
+          iconType: newIconRef ? "image" : "emoji",
+          iconValue: newIconRef || iconByName(name),
+          createdAt: nowMinuteText(),
+          patternText: DEFAULT_PATTERN_TEXT,
+          patternImages: [],
+          currentRow: 1,
+          note: "",
+          history: []
+        };
+
+        projects.unshift(nextProject);
+        if (!persist()) {
+          projects.shift();
+          if (newIconRef) {
+            try { await deleteImageFromDb(newIconRef); } catch {}
+          }
+          showToast("创建失败：本地存储空间不足");
+          return;
+        }
+        closeCreateDialog();
+        renderList();
+        showToast("已新建项目");
+        return;
+      }
+
+      if (createDialogMode === "rename") {
+        const p = projects.find(i => i.id === createDialogEditingId);
+        if (!p) return;
+
+        const oldName = p.name;
+        const oldIconType = p.iconType;
+        const oldIconValue = p.iconValue;
+        let newIconRef = "";
+
+        p.name = name;
+        if (pendingCreateIconFile) {
+          try {
+            newIconRef = await saveImageBlobToDb(pendingCreateIconFile);
+          } catch {
+            p.name = oldName;
+            showToast("保存失败：图标保存失败");
+            return;
+          }
+          p.iconType = "image";
+          p.iconValue = newIconRef;
+        }
+
+        if (!persist()) {
+          p.name = oldName;
+          p.iconType = oldIconType;
+          p.iconValue = oldIconValue;
+          if (newIconRef) {
+            try { await deleteImageFromDb(newIconRef); } catch {}
+          }
+          showToast("保存失败：本地存储空间不足");
+          return;
+        }
+
+        if (newIconRef && oldIconType === "image" && isImageDbRef(oldIconValue)) {
+          try { await deleteImageFromDb(oldIconValue); } catch {}
+        }
+
+        closeCreateDialog();
+        renderList();
+        showToast("已保存");
+      }
+    });
+
+    createMask.addEventListener("click", e => {
+      if (e.target === createMask) closeCreateDialog();
+    });
+
+    patternBackBtn.addEventListener("click", () => {
       const p = currentProject();
       if (p) {
-        p.note = String(noteInput.value || "");
-        persist();
+        const oldText = p.patternText;
+        p.patternText = String(patternText.value || "");
+        if (!persist()) {
+          p.patternText = oldText;
+          return;
+        }
       }
       toListView();
     });
+    patternSaveBtn.addEventListener("click", onPatternSave);
+
+    patternUploadBtn.addEventListener("click", () => {
+      patternImageInput.click();
+    });
+
+    patternImageInput.addEventListener("change", async () => {
+      const p = currentProject();
+      if (!p) return;
+      const files = Array.from(patternImageInput.files || []);
+      if (!files.length) return;
+
+      let savedCount = 0;
+      let failedCount = 0;
+      for (const file of files) {
+        try {
+          const ref = await saveImageBlobToDb(file);
+          p.patternImages.push(ref);
+          if (!persist()) {
+            p.patternImages.pop();
+            try { await deleteImageFromDb(ref); } catch {}
+            failedCount += 1;
+            continue;
+          }
+          savedCount += 1;
+        } catch {
+          failedCount += 1;
+        }
+      }
+      patternImageInput.value = "";
+      renderPatternImages(p);
+      if (savedCount && !failedCount) {
+        showToast(`已保存 ${savedCount} 张图片`);
+        return;
+      }
+      if (savedCount && failedCount) {
+        showToast(`已保存 ${savedCount} 张，${failedCount} 张未保存`);
+        return;
+      }
+      if (!savedCount && failedCount) {
+        showToast("图片未保存：本地存储空间不足或读取失败");
+      }
+    });
+
+    patternImages.addEventListener("click", e => {
+      if (Date.now() < suppressImageClickUntil) return;
+      const card = findClosest(e.target, ".pattern-image");
+      if (!card || !card.dataset.ref) return;
+      openPhotoViewer(card.dataset.ref);
+    });
+
+    patternImages.addEventListener("contextmenu", e => {
+      const card = findClosest(e.target, ".pattern-image");
+      if (!card) return;
+      e.preventDefault();
+      const index = Number(card.dataset.index);
+      requestDeletePatternImage(index);
+    });
+
+    patternImages.addEventListener("touchstart", e => {
+      const card = findClosest(e.target, ".pattern-image");
+      if (!card) return;
+      cancelLongPressDelete();
+      longPressTarget = card;
+      longPressTimer = setTimeout(() => {
+        const index = Number(longPressTarget && longPressTarget.dataset.index);
+        suppressImageClickUntil = Date.now() + 500;
+        requestDeletePatternImage(index);
+        cancelLongPressDelete();
+      }, 520);
+    }, { passive: true });
+
+    patternImages.addEventListener("touchmove", cancelLongPressDelete, { passive: true });
+    patternImages.addEventListener("touchend", cancelLongPressDelete, { passive: true });
+    patternImages.addEventListener("touchcancel", cancelLongPressDelete, { passive: true });
+
+    startRowBtn.addEventListener("click", toRowView);
+
+    rowBackBtn.addEventListener("click", () => {
+      const p = currentProject();
+      if (p) {
+        const oldNote = p.note;
+        p.note = String(noteInput.value || "");
+        if (!persist()) {
+          p.note = oldNote;
+          return;
+        }
+      }
+      toPatternView(currentId);
+    });
+
     saveBtn.addEventListener("click", onSave);
     plusBtn.addEventListener("click", onPlus);
     minusBtn.addEventListener("click", onMinus);
     clearHistoryBtn.addEventListener("click", clearHistory);
 
+    noteInput.addEventListener("input", () => {
+      const p = currentProject();
+      if (!p) return;
+      p.note = String(noteInput.value || "");
+    });
+
+    patternText.addEventListener("input", () => {
+      autoResizePatternText();
+      const p = currentProject();
+      if (!p) return;
+      p.patternText = String(patternText.value || "");
+      persist();
+    });
+
+    photoViewerMask.addEventListener("click", e => {
+      if (e.target === photoViewerMask) closePhotoViewer();
+    });
+
     dialogCancelBtn.addEventListener("click", () => closeDialog(null));
     dialogConfirmBtn.addEventListener("click", () => {
-      if (activeDialogType === "prompt") {
-        closeDialog(dialogInput.value);
-        return;
-      }
       closeDialog(true);
     });
 
@@ -960,6 +2063,22 @@
     });
 
     document.addEventListener("keydown", e => {
+      if (createMask.classList.contains("show") && e.key === "Escape") {
+        e.preventDefault();
+        closeCreateDialog();
+        return;
+      }
+      if (backupMask.classList.contains("show") && e.key === "Escape") {
+        e.preventDefault();
+        closeBackupDialog();
+        return;
+      }
+      if (importModeMask.classList.contains("show") && e.key === "Escape") {
+        e.preventDefault();
+        closeImportModeDialog(null);
+        return;
+      }
+
       if (!activeDialogResolver) return;
       if (e.key === "Escape") {
         e.preventDefault();
@@ -967,25 +2086,16 @@
       }
       if (e.key === "Enter") {
         e.preventDefault();
-        if (activeDialogType === "prompt") closeDialog(dialogInput.value);
-        else closeDialog(true);
+        closeDialog(true);
       }
     });
 
-    noteInput.addEventListener("input", () => {
-      const p = currentProject();
-      if (!p) return;
-      p.note = String(noteInput.value || "");
-    });
-
-    // 防止缩放手势，不拦截按钮快速连续点击
     ["gesturestart", "gesturechange", "gestureend"].forEach(type => {
       document.addEventListener(type, e => {
         e.preventDefault();
       }, { passive: false });
     });
 
-    // 仅拦截非交互区双击缩放，保留按钮连续点击能力
     let lastNonInteractiveTouchEnd = 0;
     document.addEventListener("touchend", e => {
       const target = e.target;
@@ -996,6 +2106,8 @@
     }, { passive: false });
 
     renderList();
+    migrateLegacyPatternImages();
+    migrateLegacyProjectIcons();
   </script>
 </body>
 </html>
