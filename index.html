@@ -1263,8 +1263,17 @@
     }
 
     function autoResizePatternText() {
+      const prevHeight = patternText.offsetHeight;
       patternText.style.height = "auto";
-      patternText.style.height = `${Math.max(patternText.scrollHeight, 110)}px`;
+      const nextHeight = Math.max(patternText.scrollHeight, 110);
+      patternText.style.height = `${nextHeight}px`;
+
+      // iOS/移动端在删除文本导致高度收缩时，容器会出现“向上弹一下”的观感。
+      // 通过按高度差补偿滚动，保持视觉位置稳定。
+      const delta = nextHeight - prevHeight;
+      if (delta !== 0 && patternView.classList.contains("active")) {
+        patternView.scrollTop += delta;
+      }
     }
 
     function collectProjectImageRefs(project) {
