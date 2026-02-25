@@ -25,20 +25,22 @@
 
     html, body {
       height: 100%;
-      overscroll-behavior-y: none;
+      overscroll-behavior: none;
+      background:
+        radial-gradient(120vw 60vh at 15% -5%, #ffd8ea 0, transparent 55%),
+        radial-gradient(120vw 70vh at 100% 0%, #e7dcff 0, transparent 55%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
     }
 
     body {
       margin: 0;
       font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
       color: var(--text);
-      min-height: 100vh;
+      min-height: 100svh;
+      height: 100svh;
+      overflow: hidden;
       overflow-x: hidden;
       touch-action: manipulation;
-      background:
-        radial-gradient(120vw 60vh at 15% -5%, #ffd8ea 0, transparent 55%),
-        radial-gradient(120vw 70vh at 100% 0%, #e7dcff 0, transparent 55%),
-        linear-gradient(180deg, var(--bg), var(--bg2));
       padding: calc(10px + var(--safe-top)) 12px calc(12px + var(--safe-bottom));
     }
 
@@ -46,14 +48,19 @@
       width: 100%;
       max-width: 460px;
       margin: 0 auto;
-      min-height: calc(100vh - 22px - var(--safe-top) - var(--safe-bottom));
+      min-height: calc(100svh - 22px - var(--safe-top) - var(--safe-bottom));
+      height: calc(100svh - 22px - var(--safe-top) - var(--safe-bottom));
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
     }
 
     @media (min-width: 760px) {
       body { display: grid; place-items: center; }
       .phone {
         width: 420px;
-        min-height: min(860px, calc(100vh - 20px));
+        min-height: min(860px, calc(100svh - 20px));
+        height: min(860px, calc(100svh - 20px));
         border-radius: 28px;
         border: 1px solid rgba(255, 255, 255, 0.9);
         box-shadow: 0 26px 45px rgba(80, 40, 100, 0.18);
@@ -62,12 +69,18 @@
     }
 
     .view { display: none; }
-    .view.active { display: block; }
+    .view.active {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-height: 0;
+    }
 
     #listView,
     #contentView {
       padding-left: 12px;
       padding-right: 12px;
+      overflow: hidden;
     }
 
     .top {
@@ -122,12 +135,26 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-y;
+      scrollbar-width: none;
+    }
+
+    .list::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+      display: none;
     }
 
     .swipe-wrap {
       position: relative;
       overflow: hidden;
       border-radius: 20px;
+      flex: 0 0 auto;
     }
 
     .swipe-actions {
@@ -284,6 +311,13 @@
     .note-panel,
     .history-panel { margin-top: 10px; }
 
+    .history-panel {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+
     .label {
       display: flex;
       align-items: center;
@@ -325,8 +359,17 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
-      max-height: 34vh;
-      overflow: auto;
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: none;
+    }
+
+    .history-list::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+      display: none;
     }
 
     .history-item {
@@ -374,7 +417,6 @@
       <div class="top">
         <div class="title">🧶 钩织项目</div>
       </div>
-      <div class="hint">左滑可显示「重命名 / 删除」，点击其他区域可收起左滑。</div>
       <div class="list" id="projectList"></div>
       <div class="new-box">
         <div class="new-txt">新开一个作品</div>
@@ -397,7 +439,6 @@
           <div class="num" id="rowNum">1</div>
           <button class="step" id="plusBtn">+</button>
         </div>
-        <div class="tip">当前行数从 1 开始。点击“+”会记录当前行数和备注并清空备注；点击“-”会删除最新一条历史记录。</div>
       </div>
 
       <div class="panel note-panel">
@@ -718,12 +759,13 @@
       history.slice().reverse().forEach(item => {
         const div = document.createElement("div");
         div.className = "history-item";
+        const noteText = String(item.note || "").trim();
         div.innerHTML = `
           <div class="h-top">
             <div class="h-row">行数：${clampRow(item.row)}</div>
             <div class="h-time">${escapeHtml(item.time || "")}</div>
           </div>
-          <div class="h-note">${escapeHtml(item.note || "（无备注）")}</div>
+          <div class="h-note">${escapeHtml(noteText)}</div>
         `;
         historyList.appendChild(div);
       });
@@ -806,16 +848,11 @@
       p.note = String(noteInput.value || "");
     });
 
-    // 防止移动端双击导致页面缩放/位移
-    let lastTouchEndAt = 0;
-    document.addEventListener("touchend", e => {
-      const now = Date.now();
-      if (now - lastTouchEndAt < 300) e.preventDefault();
-      lastTouchEndAt = now;
-    }, { passive: false });
-
-    document.addEventListener("dblclick", e => {
-      e.preventDefault();
+    // 防止缩放手势，不拦截按钮快速连续点击
+    ["gesturestart", "gesturechange", "gestureend"].forEach(type => {
+      document.addEventListener(type, e => {
+        e.preventDefault();
+      }, { passive: false });
     });
 
     renderList();
