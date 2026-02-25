@@ -462,6 +462,57 @@
       margin-top: 8px;
     }
 
+    .backup-dialog {
+      border-radius: 22px;
+      background:
+        radial-gradient(120% 80% at 0% 0%, rgba(255, 211, 233, 0.5), transparent 56%),
+        radial-gradient(120% 80% at 100% 0%, rgba(230, 218, 255, 0.5), transparent 56%),
+        #fff;
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      box-shadow: 0 18px 36px rgba(84, 48, 108, 0.23);
+      padding: 16px;
+    }
+
+    .backup-subtitle {
+      margin: -2px 0 12px;
+      color: #8f7d99;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .backup-action {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      border-radius: 14px;
+      border: 1px solid #f0e4f8;
+      padding: 11px 12px;
+      font-weight: 900;
+      color: #6f2b61;
+      background: linear-gradient(135deg, rgba(255, 238, 246, 0.9), rgba(244, 237, 255, 0.92));
+      box-shadow: 0 8px 16px rgba(124, 89, 153, 0.12);
+    }
+
+    .backup-action span {
+      font-size: 18px;
+      line-height: 1;
+      color: #9f7db8;
+      flex: 0 0 auto;
+      order: -1;
+    }
+
+    .backup-action.danger {
+      color: #8d2d49;
+      background: linear-gradient(135deg, rgba(255, 233, 239, 0.95), rgba(255, 245, 248, 0.95));
+      border-color: #ffd9e4;
+    }
+
+    .backup-close {
+      min-width: 76px;
+    }
+
     .icon-picker {
       display: flex;
       align-items: center;
@@ -614,26 +665,28 @@
   </div>
 
   <div class="dialog-mask" id="backupMask" aria-hidden="true">
-    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="backupTitle">
+    <div class="dialog backup-dialog" role="dialog" aria-modal="true" aria-labelledby="backupTitle">
       <div class="dialog-title" id="backupTitle">数据备份</div>
+      <div class="backup-subtitle">建议定期导出，换手机或清缓存前先备份。</div>
       <div class="backup-actions">
-        <button class="btn secondary" id="backupExportBtn">导出备份</button>
-        <button class="btn secondary" id="backupImportBtn">导入备份</button>
+        <button class="backup-action" id="backupExportBtn"><span>⬇︎</span>导出备份</button>
+        <button class="backup-action" id="backupImportBtn"><span>⬆︎</span>导入备份</button>
       </div>
       <div class="dialog-actions" style="margin-top:12px;">
-        <button class="btn small" id="backupCloseBtn">关闭</button>
+        <button class="btn small backup-close" id="backupCloseBtn">关闭</button>
       </div>
     </div>
   </div>
   <div class="dialog-mask" id="importModeMask" aria-hidden="true">
-    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="importModeTitle">
+    <div class="dialog backup-dialog" role="dialog" aria-modal="true" aria-labelledby="importModeTitle">
       <div class="dialog-title" id="importModeTitle">请选择导入方式</div>
+      <div class="backup-subtitle">合并会保留当前数据；覆盖会替换当前数据。</div>
       <div class="import-mode-actions">
-        <button class="btn secondary" id="importMergeBtn">合并数据</button>
-        <button class="btn danger" id="importOverwriteBtn">覆盖数据</button>
+        <button class="backup-action" id="importMergeBtn"><span>⇄</span>合并数据</button>
+        <button class="backup-action danger" id="importOverwriteBtn"><span>⚠︎</span>覆盖数据</button>
       </div>
       <div class="dialog-actions" style="margin-top:12px;">
-        <button class="btn small" id="importModeCancelBtn">取消</button>
+        <button class="btn small backup-close" id="importModeCancelBtn">取消</button>
       </div>
     </div>
   </div>
@@ -1292,7 +1345,10 @@
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      showToast("备份已导出");
+      const ua = navigator.userAgent || "";
+      const isIOS = /iP(hone|ad|od)/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      if (isIOS) showToast("已准备备份，请在系统弹窗中确认下载");
+      else showToast("备份已导出");
     }
 
     async function importBackupFile(file) {
