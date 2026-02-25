@@ -1094,7 +1094,6 @@
       releasePatternObjectUrls(true);
       closePhotoViewer();
       closeOpenedSwipe();
-      renderList();
     }
 
     function toPatternView(id) {
@@ -1123,12 +1122,24 @@
       if (!urls.length) return;
       let cursor = 0;
       const batchSize = 24;
-      const releaseStep = () => {
-        const end = Math.min(cursor + batchSize, urls.length);
+      const releaseStep = deadline => {
+        const hasDeadline = deadline && typeof deadline.timeRemaining === "function";
+        const maxByTime = hasDeadline ? Math.max(1, Math.floor(deadline.timeRemaining() / 2)) : batchSize;
+        const end = Math.min(cursor + Math.min(batchSize, maxByTime), urls.length);
         for (; cursor < end; cursor += 1) URL.revokeObjectURL(urls[cursor]);
-        if (cursor < urls.length) setTimeout(releaseStep, 0);
+        if (cursor < urls.length) scheduleNextRelease();
       };
-      setTimeout(releaseStep, 0);
+
+      const scheduleNextRelease = () => {
+        if ("requestIdleCallback" in window) {
+          window.requestIdleCallback(releaseStep, { timeout: 180 });
+        } else {
+          setTimeout(() => releaseStep(), 16);
+        }
+      };
+
+      // 先让返回视图完成绘制，再在空闲时分批释放，减少“点击返回后的瞬时卡顿”。
+      setTimeout(scheduleNextRelease, 120);
     }
 
     function releasePatternObjectUrls(defer = false) {
@@ -1599,7 +1610,7 @@
         projectList.appendChild(wrap);
       });
       const token = ++listIconHydrateToken;
-      hydrateListIconRefs(token);
+      requestAnimationFrame(() => hydrateListIconRefs(token));
 
       if (!globalPointerBound) {
         document.addEventListener("pointerdown", onGlobalPointerDown, { capture: true });
