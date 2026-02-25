@@ -109,21 +109,24 @@
       font-weight: 900;
       font-size: 18px;
       letter-spacing: 0.5px;
-      padding: 8px 12px;
+      height: 36px;
+      padding: 0 12px;
       border-radius: 999px;
       background: linear-gradient(135deg, #ffd7ea, #e9e0ff);
       box-shadow: var(--shadow);
       border: 0;
       color: var(--text);
+      display: inline-flex;
+      align-items: center;
     }
 
     .project-title {
       text-align: center;
       font-weight: 1000;
-      font-size: 24px;
+      font-size: 18px;
       line-height: 1.2;
       letter-spacing: 0.3px;
-      margin: -20px 0 8px;
+      margin: -12px 0 10px;
       padding: 0;
       display: flex;
       align-items: center;
@@ -157,7 +160,15 @@
     }
 
     .btn.danger { background: linear-gradient(135deg, var(--danger), #ff8dad); }
-    .btn.small { font-size: 13px; padding: 8px 10px; border-radius: 12px; }
+    .btn.small {
+      font-size: 13px;
+      height: 36px;
+      padding: 0 10px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
     .btn:active { transform: translateY(1px); }
 
     .list,
@@ -510,10 +521,6 @@
       border-color: #ffd9e4;
     }
 
-    .backup-close {
-      min-width: 76px;
-    }
-
     .icon-picker {
       display: flex;
       align-items: center;
@@ -577,7 +584,7 @@
     <section class="view" id="patternView">
       <div class="content-actions">
         <button class="btn secondary small" id="patternBackBtn">返回</button>
-        <button class="btn small" id="patternSaveBtn">保存</button>
+        <button class="btn small" id="startRowBtn">行数记录</button>
       </div>
       <div class="project-title" id="patternTitle"></div>
 
@@ -591,20 +598,12 @@
           <input id="patternImageInput" type="file" accept="image/*" multiple hidden>
           <div class="pattern-images" id="patternImages"></div>
         </div>
-
-        <div class="panel">
-          <div class="label">
-            <span>行数记录</span>
-          </div>
-          <button class="btn" id="startRowBtn" style="width:100%;">开始行数记录</button>
-        </div>
       </div>
     </section>
 
     <section class="view" id="rowView">
       <div class="content-actions">
         <button class="btn secondary small" id="rowBackBtn">返回</button>
-        <button class="btn small" id="saveBtn">保存</button>
       </div>
       <div class="project-title" id="rowTitle"></div>
 
@@ -673,9 +672,6 @@
         <button class="backup-action" id="backupExportBtn">导出备份</button>
         <button class="backup-action" id="backupImportBtn">导入备份</button>
       </div>
-      <div class="dialog-actions" style="margin-top:12px;">
-        <button class="btn small backup-close" id="backupCloseBtn">关闭</button>
-      </div>
     </div>
   </div>
   <div class="dialog-mask" id="importModeMask" aria-hidden="true">
@@ -685,9 +681,6 @@
       <div class="import-mode-actions">
         <button class="backup-action" id="importMergeBtn"><span>⇄</span>合并数据</button>
         <button class="backup-action danger" id="importOverwriteBtn"><span>⚠︎</span>覆盖数据</button>
-      </div>
-      <div class="dialog-actions" style="margin-top:12px;">
-        <button class="btn small backup-close" id="importModeCancelBtn">取消</button>
       </div>
     </div>
   </div>
@@ -711,15 +704,12 @@
     const backupMask = document.getElementById("backupMask");
     const backupExportBtn = document.getElementById("backupExportBtn");
     const backupImportBtn = document.getElementById("backupImportBtn");
-    const backupCloseBtn = document.getElementById("backupCloseBtn");
     const importModeMask = document.getElementById("importModeMask");
     const importMergeBtn = document.getElementById("importMergeBtn");
     const importOverwriteBtn = document.getElementById("importOverwriteBtn");
-    const importModeCancelBtn = document.getElementById("importModeCancelBtn");
     const importInput = document.getElementById("importInput");
 
     const patternBackBtn = document.getElementById("patternBackBtn");
-    const patternSaveBtn = document.getElementById("patternSaveBtn");
     const patternTitle = document.getElementById("patternTitle");
     const patternText = document.getElementById("patternText");
     const patternUploadBtn = document.getElementById("patternUploadBtn");
@@ -728,7 +718,6 @@
     const startRowBtn = document.getElementById("startRowBtn");
 
     const rowBackBtn = document.getElementById("rowBackBtn");
-    const saveBtn = document.getElementById("saveBtn");
     const rowTitle = document.getElementById("rowTitle");
     const rowNum = document.getElementById("rowNum");
     const plusBtn = document.getElementById("plusBtn");
@@ -1102,7 +1091,7 @@
       switchView(listView);
       currentId = null;
       patternRenderToken += 1;
-      releasePatternObjectUrls();
+      releasePatternObjectUrls(true);
       closePhotoViewer();
       closeOpenedSwipe();
       renderList();
@@ -1130,9 +1119,27 @@
       renderHistory(p);
     }
 
-    function releasePatternObjectUrls() {
-      for (const url of patternObjectUrls) URL.revokeObjectURL(url);
+    function releaseObjectUrlsInBatches(urls) {
+      if (!urls.length) return;
+      let cursor = 0;
+      const batchSize = 24;
+      const releaseStep = () => {
+        const end = Math.min(cursor + batchSize, urls.length);
+        for (; cursor < end; cursor += 1) URL.revokeObjectURL(urls[cursor]);
+        if (cursor < urls.length) setTimeout(releaseStep, 0);
+      };
+      setTimeout(releaseStep, 0);
+    }
+
+    function releasePatternObjectUrls(defer = false) {
+      if (!patternObjectUrls.length) return;
+      const urls = patternObjectUrls;
       patternObjectUrls = [];
+      if (defer) {
+        releaseObjectUrlsInBatches(urls);
+        return;
+      }
+      for (const url of urls) URL.revokeObjectURL(url);
     }
 
     async function resolveImageSrc(ref) {
@@ -1472,6 +1479,7 @@
       let tracking = false;
       let dragged = false;
       let wheelDx = 0;
+      let wheelResetTimer = null;
 
       function start(ev) {
         const t = ev.touches ? ev.touches[0] : ev;
@@ -1523,8 +1531,8 @@
           wheelDx = 0;
         }
 
-        clearTimeout(front._wheelResetTimer);
-        front._wheelResetTimer = setTimeout(() => { wheelDx = 0; }, 120);
+        clearTimeout(wheelResetTimer);
+        wheelResetTimer = setTimeout(() => { wheelDx = 0; }, 120);
       }
 
       if (window.PointerEvent) {
@@ -1771,13 +1779,23 @@
     function onPlus() {
       const p = currentProject();
       if (!p) return;
+      const prevRow = clampRow(p.currentRow);
+      const prevNote = String(p.note || "");
+      const prevHistory = Array.isArray(p.history) ? p.history.slice() : [];
       addHistorySnapshot(p);
       p.currentRow = clampRow(p.currentRow + 1);
       rowNum.textContent = String(p.currentRow);
       renderHistory(p);
       noteInput.value = "";
       p.note = "";
-      persist();
+      if (!persist()) {
+        p.currentRow = prevRow;
+        p.note = prevNote;
+        p.history = prevHistory;
+        rowNum.textContent = String(prevRow);
+        noteInput.value = prevNote;
+        renderHistory(p);
+      }
     }
 
     function onMinus() {
@@ -1788,38 +1806,21 @@
         showToast("没有可删除的历史记录");
         return;
       }
+      const prevRow = clampRow(p.currentRow);
+      const prevNote = String(p.note || "");
+      const prevHistory = p.history.slice();
       p.history.pop();
       p.currentRow = clampRow(p.currentRow - 1);
       rowNum.textContent = String(p.currentRow);
       renderHistory(p);
-      persist();
-    }
-
-    function onSave() {
-      const p = currentProject();
-      if (!p) return;
-      const oldRow = p.currentRow;
-      const oldNote = p.note;
-      p.currentRow = clampRow(rowNum.textContent);
-      p.note = String(noteInput.value || "");
       if (!persist()) {
-        p.currentRow = oldRow;
-        p.note = oldNote;
-        return;
+        p.currentRow = prevRow;
+        p.note = prevNote;
+        p.history = prevHistory;
+        rowNum.textContent = String(prevRow);
+        noteInput.value = prevNote;
+        renderHistory(p);
       }
-      showToast("保存成功");
-    }
-
-    function onPatternSave() {
-      const p = currentProject();
-      if (!p) return;
-      const oldText = p.patternText;
-      p.patternText = String(patternText.value || "");
-      if (!persist()) {
-        p.patternText = oldText;
-        return;
-      }
-      showToast("保存成功");
     }
 
     async function clearHistory() {
@@ -1853,13 +1854,11 @@
       closeBackupDialog();
       importInput.click();
     });
-    backupCloseBtn.addEventListener("click", closeBackupDialog);
     backupMask.addEventListener("click", e => {
       if (e.target === backupMask) closeBackupDialog();
     });
     importMergeBtn.addEventListener("click", () => closeImportModeDialog("merge"));
     importOverwriteBtn.addEventListener("click", () => closeImportModeDialog("overwrite"));
-    importModeCancelBtn.addEventListener("click", () => closeImportModeDialog(null));
     importModeMask.addEventListener("click", e => {
       if (e.target === importModeMask) closeImportModeDialog(null);
     });
@@ -1985,18 +1984,9 @@
     });
 
     patternBackBtn.addEventListener("click", () => {
-      const p = currentProject();
-      if (p) {
-        const oldText = p.patternText;
-        p.patternText = String(patternText.value || "");
-        if (!persist()) {
-          p.patternText = oldText;
-          return;
-        }
-      }
+      // 图解文本已在 input 事件中自动保存，返回时无需再次同步写入 localStorage
       toListView();
     });
-    patternSaveBtn.addEventListener("click", onPatternSave);
 
     patternUploadBtn.addEventListener("click", () => {
       patternImageInput.click();
@@ -2087,7 +2077,6 @@
       toPatternView(currentId);
     });
 
-    saveBtn.addEventListener("click", onSave);
     plusBtn.addEventListener("click", onPlus);
     minusBtn.addEventListener("click", onMinus);
     clearHistoryBtn.addEventListener("click", clearHistory);
@@ -2095,7 +2084,12 @@
     noteInput.addEventListener("input", () => {
       const p = currentProject();
       if (!p) return;
+      const prevNote = String(p.note || "");
       p.note = String(noteInput.value || "");
+      if (!persist()) {
+        p.note = prevNote;
+        noteInput.value = prevNote;
+      }
     });
 
     patternText.addEventListener("input", () => {
