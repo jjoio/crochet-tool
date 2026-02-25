@@ -8,12 +8,9 @@
     :root {
       --bg: #fff5fb;
       --bg2: #fdf0ff;
-      --card: #ffffff;
       --text: #3c2b44;
       --muted: #7a6a84;
       --pink: #ff73b6;
-      --pink-deep: #f5539f;
-      --rose: #ffc1df;
       --blue: #98d6ff;
       --danger: #ff6f8e;
       --shadow: 0 10px 24px rgba(245, 83, 159, 0.14);
@@ -23,10 +20,8 @@
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-    html,
-    body {
+    html, body {
       height: 100%;
-      height: -webkit-fill-available;
       overscroll-behavior: none;
       background-color: var(--bg);
       background:
@@ -39,17 +34,12 @@
       margin: 0;
       font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
       color: var(--text);
-      min-height: -webkit-fill-available;
       min-height: 100dvh;
       height: 100dvh;
       overflow: hidden;
       overflow-x: hidden;
       touch-action: manipulation;
       padding: 0;
-      background:
-        radial-gradient(120vw 60vh at 15% -5%, #ffd8ea 0, transparent 55%),
-        radial-gradient(120vw 70vh at 100% 0%, #e7dcff 0, transparent 55%),
-        linear-gradient(180deg, var(--bg), var(--bg2));
     }
 
     .phone {
@@ -60,7 +50,7 @@
       height: 100%;
       display: flex;
       flex-direction: column;
-      min-height: 0;
+      overflow: hidden;
       padding: calc(10px + var(--safe-top)) 12px calc(12px + var(--safe-bottom));
     }
 
@@ -131,14 +121,6 @@
     .btn.danger { background: linear-gradient(135deg, var(--danger), #ff8dad); }
     .btn.small { font-size: 13px; padding: 8px 10px; border-radius: 12px; }
     .btn:active { transform: translateY(1px); }
-
-    .hint {
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 10px;
-      line-height: 1.4;
-      padding: 0 2px;
-    }
 
     .list {
       display: flex;
@@ -296,13 +278,6 @@
       color: #2c1935;
     }
 
-    .tip {
-      margin-top: 8px;
-      color: var(--muted);
-      font-size: 12.5px;
-      line-height: 1.4;
-    }
-
     .note-panel,
     .history-panel { margin-top: 10px; }
 
@@ -405,6 +380,59 @@
     }
 
     .toast.show { opacity: 1; }
+
+    .dialog-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(27, 16, 35, 0.34);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+
+    .dialog-mask.show { display: flex; }
+
+    .dialog {
+      width: min(420px, 100%);
+      border-radius: 18px;
+      background: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 16px 36px rgba(58, 34, 73, 0.25);
+      padding: 14px;
+    }
+
+    .dialog-title {
+      font-size: 16px;
+      font-weight: 900;
+      color: #4f2852;
+      margin-bottom: 10px;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .dialog-input {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid #e7d6ff;
+      background: #fff;
+      padding: 10px 11px;
+      font-size: 14px;
+      outline: none;
+      margin-bottom: 12px;
+    }
+
+    .dialog-input:focus {
+      border-color: #ff8fc8;
+      box-shadow: 0 0 0 4px rgba(255, 143, 200, 0.14);
+    }
+
+    .dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
   </style>
 </head>
 <body>
@@ -451,6 +479,16 @@
   </main>
 
   <div class="toast" id="toast"></div>
+  <div class="dialog-mask" id="dialogMask" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
+      <div class="dialog-title" id="dialogTitle"></div>
+      <input class="dialog-input" id="dialogInput" type="text" />
+      <div class="dialog-actions">
+        <button class="btn secondary small" id="dialogCancelBtn">取消</button>
+        <button class="btn small" id="dialogConfirmBtn">确定</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     const STORAGE_KEY = "crochet_projects_v2";
@@ -471,6 +509,11 @@
     const historyList = document.getElementById("historyList");
     const historyEmpty = document.getElementById("historyEmpty");
     const toastEl = document.getElementById("toast");
+    const dialogMask = document.getElementById("dialogMask");
+    const dialogTitle = document.getElementById("dialogTitle");
+    const dialogInput = document.getElementById("dialogInput");
+    const dialogCancelBtn = document.getElementById("dialogCancelBtn");
+    const dialogConfirmBtn = document.getElementById("dialogConfirmBtn");
 
     const icons = ["🧶", "🧵", "🎀", "🌸", "🍓", "🐰", "✨", "🩷", "🪡"];
 
@@ -500,6 +543,51 @@
       setTimeout(() => toastEl.classList.remove("show"), 900);
     }
 
+    let activeDialogResolver = null;
+    let activeDialogType = "confirm";
+
+    function closeDialog(result) {
+      if (!activeDialogResolver) return;
+      const resolver = activeDialogResolver;
+      activeDialogResolver = null;
+      dialogMask.classList.remove("show");
+      dialogMask.setAttribute("aria-hidden", "true");
+      resolver(result);
+    }
+
+    function openConfirmDialog(message, confirmText = "确定") {
+      if (activeDialogResolver) return Promise.resolve(null);
+      return new Promise(resolve => {
+        activeDialogType = "confirm";
+        activeDialogResolver = resolve;
+        dialogTitle.textContent = message;
+        dialogInput.style.display = "none";
+        dialogInput.value = "";
+        dialogConfirmBtn.textContent = confirmText;
+        dialogMask.classList.add("show");
+        dialogMask.setAttribute("aria-hidden", "false");
+        dialogConfirmBtn.focus();
+      });
+    }
+
+    function openPromptDialog(message, defaultValue = "") {
+      if (activeDialogResolver) return Promise.resolve(null);
+      return new Promise(resolve => {
+        activeDialogType = "prompt";
+        activeDialogResolver = resolve;
+        dialogTitle.textContent = message;
+        dialogInput.style.display = "block";
+        dialogInput.value = defaultValue;
+        dialogConfirmBtn.textContent = "确定";
+        dialogMask.classList.add("show");
+        dialogMask.setAttribute("aria-hidden", "false");
+        requestAnimationFrame(() => {
+          dialogInput.focus();
+          dialogInput.select();
+        });
+      });
+    }
+
     function escapeHtml(v) {
       return String(v)
         .replaceAll("&", "&amp;")
@@ -507,6 +595,12 @@
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#39;");
+    }
+
+    function findClosest(target, selector) {
+      if (target instanceof Element) return target.closest(selector);
+      if (target && target.parentElement) return target.parentElement.closest(selector);
+      return null;
     }
 
     function clampRow(v) {
@@ -594,7 +688,7 @@
 
     function onGlobalPointerDown(e) {
       if (!listView.classList.contains("active")) return;
-      const wrap = e.target.closest(".swipe-wrap");
+      const wrap = findClosest(e.target, ".swipe-wrap");
       if (!wrap) {
         closeOpenedSwipe();
         return;
@@ -606,12 +700,14 @@
       let sx = 0;
       let sy = 0;
       let tracking = false;
+      let dragged = false;
 
       function start(ev) {
         const t = ev.touches ? ev.touches[0] : ev;
         sx = t.clientX;
         sy = t.clientY;
         tracking = true;
+        dragged = false;
       }
 
       function move(ev) {
@@ -620,6 +716,7 @@
         const dx = t.clientX - sx;
         const dy = t.clientY - sy;
         if (Math.abs(dx) <= 14 || Math.abs(dx) <= Math.abs(dy)) return;
+        dragged = true;
         if (ev.cancelable) ev.preventDefault();
         if (dx < -34) {
           closeOpenedSwipe(id);
@@ -634,6 +731,9 @@
 
       function end() {
         tracking = false;
+        if (dragged) {
+          front.dataset.ignoreClickUntil = String(Date.now() + 260);
+        }
       }
 
       if (window.PointerEvent) {
@@ -674,7 +774,7 @@
         `;
 
         actions.addEventListener("click", e => {
-          const btn = e.target.closest("button");
+          const btn = findClosest(e.target, "button");
           if (!btn) return;
           const act = btn.dataset.act;
           if (act === "rename") renameProject(project.id);
@@ -682,7 +782,9 @@
         });
 
         front.addEventListener("click", e => {
-          const btn = e.target.closest("button");
+          const ignoreUntil = Number(front.dataset.ignoreClickUntil || 0);
+          if (ignoreUntil > Date.now()) return;
+          const btn = findClosest(e.target, "button");
           if (btn && btn.dataset.act === "edit") {
             closeOpenedSwipe();
             toContentView(project.id);
@@ -709,8 +811,8 @@
       }
     }
 
-    function createProject() {
-      const name = prompt("请输入项目名称", "");
+    async function createProject() {
+      const name = await openPromptDialog("请输入项目名称", "");
       if (name === null) return;
       const v = name.trim();
       if (!v) return showToast("项目名不能为空");
@@ -727,10 +829,10 @@
       showToast("已新建项目");
     }
 
-    function renameProject(id) {
+    async function renameProject(id) {
       const p = projects.find(i => i.id === id);
       if (!p) return;
-      const name = prompt("请输入新名称", p.name || "");
+      const name = await openPromptDialog("请输入新名称", p.name || "");
       if (name === null) return;
       const v = name.trim();
       if (!v) return showToast("项目名不能为空");
@@ -741,10 +843,11 @@
       showToast("已重命名");
     }
 
-    function deleteProject(id) {
+    async function deleteProject(id) {
       const p = projects.find(i => i.id === id);
       if (!p) return;
-      if (!confirm(`确定删除「${p.name}」？`)) return;
+      const ok = await openConfirmDialog(`确定删除「${p.name}」？`, "删除");
+      if (!ok) return;
       projects = projects.filter(i => i.id !== id);
       persist();
       openedSwipeId = null;
@@ -816,10 +919,11 @@
       showToast("保存成功");
     }
 
-    function clearHistory() {
+    async function clearHistory() {
       const p = currentProject();
       if (!p) return;
-      if (!confirm("确定清空历史记录吗？")) return;
+      const ok = await openConfirmDialog("确定清空历史记录吗？", "清空");
+      if (!ok) return;
       p.history = [];
       p.currentRow = 1;
       persist();
@@ -828,19 +932,7 @@
       showToast("历史已清空，行数已重置为 1");
     }
 
-    let newProjectTapGuardUntil = 0;
-    function onNewProjectTap(e) {
-      const now = Date.now();
-      if (now < newProjectTapGuardUntil) return;
-      if (e && e.type === "touchend") {
-        e.preventDefault();
-        newProjectTapGuardUntil = now + 350;
-      }
-      createProject();
-    }
-
-    newProjectBtn.addEventListener("click", onNewProjectTap);
-    newProjectBtn.addEventListener("touchend", onNewProjectTap, { passive: false });
+    newProjectBtn.addEventListener("click", createProject);
     backBtn.addEventListener("click", () => {
       const p = currentProject();
       if (p) {
@@ -853,6 +945,32 @@
     plusBtn.addEventListener("click", onPlus);
     minusBtn.addEventListener("click", onMinus);
     clearHistoryBtn.addEventListener("click", clearHistory);
+
+    dialogCancelBtn.addEventListener("click", () => closeDialog(null));
+    dialogConfirmBtn.addEventListener("click", () => {
+      if (activeDialogType === "prompt") {
+        closeDialog(dialogInput.value);
+        return;
+      }
+      closeDialog(true);
+    });
+
+    dialogMask.addEventListener("click", e => {
+      if (e.target === dialogMask) closeDialog(null);
+    });
+
+    document.addEventListener("keydown", e => {
+      if (!activeDialogResolver) return;
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closeDialog(null);
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (activeDialogType === "prompt") closeDialog(dialogInput.value);
+        else closeDialog(true);
+      }
+    });
 
     noteInput.addEventListener("input", () => {
       const p = currentProject();
@@ -871,7 +989,7 @@
     let lastNonInteractiveTouchEnd = 0;
     document.addEventListener("touchend", e => {
       const target = e.target;
-      if (target && target.closest("button, input, textarea, select, a, [contenteditable='true']")) return;
+      if (findClosest(target, "button, input, textarea, select, a, [contenteditable='true']")) return;
       const now = Date.now();
       if (now - lastNonInteractiveTouchEnd < 300) e.preventDefault();
       lastNonInteractiveTouchEnd = now;
