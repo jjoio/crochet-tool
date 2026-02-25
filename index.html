@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <title>钩织记录</title>
+  <title>毛线</title>
   <style>
     :root {
       --bg: #fff5fb;
@@ -220,20 +220,6 @@
       flex: 0 0 auto;
     }
 
-    .new-box {
-      margin-top: 12px;
-      border-radius: 20px;
-      border: 1px dashed #ffb7d9;
-      background: rgba(255, 255, 255, 0.7);
-      padding: 11px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .new-txt { color: #7b3a69; font-weight: 800; font-size: 14px; }
-
     .content-top {
       display: flex;
       flex-direction: column;
@@ -331,13 +317,14 @@
 
     textarea {
       width: 100%;
-      min-height: 92px;
+      min-height: 62px;
+      height: 62px;
       border-radius: 14px;
       border: 1px solid #e7d6ff;
       background: #fff;
       padding: 11px;
       font-size: 14px;
-      resize: vertical;
+      resize: none;
       outline: none;
     }
 
@@ -415,13 +402,10 @@
   <main class="phone">
     <section class="view active" id="listView">
       <div class="top">
-        <div class="title">🧶 钩织项目</div>
+        <div class="title">🧶 毛线</div>
+        <button class="btn small" id="newProjectBtn">+ 新建作品</button>
       </div>
       <div class="list" id="projectList"></div>
-      <div class="new-box">
-        <div class="new-txt">新开一个作品</div>
-        <button class="btn" id="newProjectBtn">+ 新建钩织项目</button>
-      </div>
     </section>
 
     <section class="view" id="contentView">
@@ -482,10 +466,13 @@
     const icons = ["🧶", "🧵", "🎀", "🌸", "🍓", "🐰", "✨", "🩷", "🪡"];
 
     let projects = loadProjects();
+    if (normalizeProjectNames(projects)) {
+      persist();
+    }
     if (!projects.length) {
       projects = [{
         id: uid(),
-        name: "我的钩织项目",
+        name: "作品 1",
         icon: "🧶",
         currentRow: 1,
         note: "",
@@ -543,6 +530,43 @@
       } catch {
         return [];
       }
+    }
+
+    function normalizeProjectNames(list) {
+      if (!Array.isArray(list)) return false;
+      let changed = false;
+      for (const p of list) {
+        if (!p || typeof p !== "object") continue;
+        const oldName = String(p.name || "");
+        let newName = oldName;
+        if (
+          oldName === "我的钩织项目" ||
+          oldName === "新的钩织项目" ||
+          oldName === "编织作品" ||
+          oldName === "钩织作品"
+        ) {
+          newName = "作品 1";
+        } else {
+          const m = oldName.match(/^(钩织项目|编织作品|作品)\\s*(\\d+)$/);
+          if (m) newName = `作品 ${m[2]}`;
+        }
+        if (newName !== oldName) {
+          p.name = newName;
+          changed = true;
+        }
+      }
+      return changed;
+    }
+
+    function nextProjectNumber() {
+      let maxNum = 0;
+      for (const p of projects) {
+        const m = String(p?.name || "").match(/^作品\\s*(\\d+)$/);
+        if (!m) continue;
+        const n = Number(m[1]);
+        if (Number.isFinite(n)) maxNum = Math.max(maxNum, n);
+      }
+      return maxNum + 1;
     }
 
     function persist() {
@@ -707,7 +731,7 @@
     }
 
     function createProject() {
-      const name = prompt("请输入项目名称", `钩织项目 ${projects.length + 1}`);
+      const name = prompt("请输入项目名称", `作品 ${nextProjectNumber()}`);
       if (name === null) return;
       const v = name.trim();
       if (!v) return showToast("项目名不能为空");
@@ -744,7 +768,7 @@
       if (!confirm(`确定删除「${p.name}」？`)) return;
       projects = projects.filter(i => i.id !== id);
       if (!projects.length) {
-        projects.push({ id: uid(), name: "新的钩织项目", icon: "🧶", currentRow: 1, note: "", history: [] });
+        projects.push({ id: uid(), name: "作品 1", icon: "🧶", currentRow: 1, note: "", history: [] });
       }
       persist();
       openedSwipeId = null;
