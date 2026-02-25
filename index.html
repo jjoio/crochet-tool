@@ -779,9 +779,11 @@
       if (!p) return;
       if (!confirm("确定清空历史记录吗？")) return;
       p.history = [];
+      p.currentRow = 1;
       persist();
+      rowNum.textContent = "1";
       renderHistory(p);
-      showToast("历史已清空");
+      showToast("历史已清空，行数已重置为 1");
     }
 
     newProjectBtn.addEventListener("click", createProject);
