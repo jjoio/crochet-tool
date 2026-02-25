@@ -1,0 +1,930 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>钩织记录器</title>
+  <style>
+    :root{
+      --bg1:#fff3fb;
+      --bg2:#f5f7ff;
+      --card:#ffffff;
+      --text:#2d2a32;
+      --muted:#6b6473;
+      --pink:#ff6fb3;
+      --pink2:#ff9fcb;
+      --purple:#a78bfa;
+      --blue:#7dd3fc;
+      --shadow: 0 12px 30px rgba(33, 14, 50, .08);
+      --shadow2: 0 10px 22px rgba(255, 111, 179, .12);
+      --radius: 18px;
+      --radius2: 22px;
+      --safeTop: env(safe-area-inset-top, 0px);
+      --safeBottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", Arial;
+      color: var(--text);
+      background: radial-gradient(1200px 800px at 20% 10%, #ffe1f1 0%, transparent 50%),
+                  radial-gradient(900px 700px at 90% 30%, #e8e4ff 0%, transparent 55%),
+                  linear-gradient(180deg, var(--bg1), var(--bg2));
+      min-height:100vh;
+      padding: calc(10px + var(--safeTop)) 14px calc(14px + var(--safeBottom));
+    }
+
+    .app{
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 10px 6px 14px;
+    }
+    .title{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+    .badge{
+      background: linear-gradient(135deg, #ffd0e6, #e7ddff);
+      border: 1px solid rgba(255,255,255,.8);
+      box-shadow: var(--shadow2);
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      color:#5b3a57;
+    }
+
+    .btn{
+      border: none;
+      border-radius: 14px;
+      padding: 10px 12px;
+      font-weight: 700;
+      color: white;
+      background: linear-gradient(135deg, var(--pink), var(--purple));
+      box-shadow: var(--shadow2);
+      cursor:pointer;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn.secondary{
+      background: rgba(255,255,255,.9);
+      color: #6a3a62;
+      border: 1px solid rgba(255, 111, 179, .25);
+      box-shadow: var(--shadow);
+    }
+    .btn.danger{
+      background: linear-gradient(135deg, #ff4d6d, #ff8fab);
+    }
+    .btn.small{
+      padding: 9px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+    }
+
+    .card{
+      background: rgba(255,255,255,.88);
+      border: 1px solid rgba(255,255,255,.9);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .hint{
+      color: var(--muted);
+      font-size: 13px;
+      padding: 0 6px 12px;
+      line-height:1.35;
+    }
+
+    /* Views */
+    .view{ display:none; }
+    .view.active{ display:block; }
+
+    /* Project list */
+    .list{
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+    }
+
+    .swipeWrap{
+      position:relative;
+      border-radius: var(--radius2);
+      overflow:hidden;
+    }
+
+    .swipeActions{
+      position:absolute;
+      inset:0;
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      padding: 10px;
+      align-items:center;
+      background: linear-gradient(135deg, rgba(255,111,179,.18), rgba(167,139,250,.14));
+    }
+
+    .swipeFront{
+      position:relative;
+      transform: translateX(0);
+      transition: transform .18s ease;
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(255,255,255,.9);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius2);
+      padding: 14px 14px;
+      display:flex;
+      align-items:center;
+      gap: 12px;
+      touch-action: pan-y; /* allow vertical scrolling */
+    }
+
+    .swipeWrap.open .swipeFront{
+      transform: translateX(-150px);
+    }
+
+    .icon{
+      width: 44px;
+      height: 44px;
+      border-radius: 16px;
+      display:grid;
+      place-items:center;
+      font-size: 22px;
+      background: linear-gradient(135deg, #ffe1f1, #e8e4ff);
+      border: 1px solid rgba(255,255,255,.85);
+      box-shadow: 0 10px 18px rgba(167,139,250,.12);
+      flex: 0 0 auto;
+    }
+
+    .projMeta{
+      flex: 1 1 auto;
+      min-width:0;
+    }
+    .projName{
+      font-weight: 900;
+      font-size: 16px;
+      line-height:1.2;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .projRow{
+      color: var(--muted);
+      margin-top: 6px;
+      font-size: 13px;
+    }
+
+    .editBtn{
+      flex: 0 0 auto;
+      background: linear-gradient(135deg, #ff93c5, #a78bfa);
+      border: none;
+      color:white;
+      border-radius: 14px;
+      padding: 10px 12px;
+      font-weight: 800;
+      box-shadow: var(--shadow2);
+    }
+
+    .footerNew{
+      margin-top: 14px;
+      padding: 10px;
+      border-radius: var(--radius2);
+      background: rgba(255,255,255,.65);
+      border: 1px dashed rgba(255,111,179,.35);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .footerNew .txt{
+      color:#6a3a62;
+      font-weight:800;
+      font-size: 14px;
+    }
+
+    /* Content page */
+    .contentHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 0 6px 10px;
+    }
+    .backBtn{
+      border:none;
+      background: rgba(255,255,255,.9);
+      color:#6a3a62;
+      border: 1px solid rgba(255,111,179,.25);
+      border-radius: 14px;
+      padding: 10px 12px;
+      font-weight: 900;
+      box-shadow: var(--shadow);
+    }
+    .contentTitle{
+      flex:1;
+      min-width:0;
+      text-align:center;
+      font-weight: 900;
+      font-size: 15px;
+      padding: 0 6px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      color:#3b2a45;
+    }
+
+    .counterCard{
+      margin-top: 6px;
+      padding: 18px 14px;
+      border-radius: var(--radius2);
+      background: rgba(255,255,255,.9);
+      border: 1px solid rgba(255,255,255,.9);
+      box-shadow: var(--shadow);
+    }
+    .counterRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+    }
+    .stepBtn{
+      width: 64px;
+      height: 64px;
+      border-radius: 20px;
+      border:none;
+      color:white;
+      font-size: 26px;
+      font-weight: 900;
+      box-shadow: var(--shadow2);
+      background: linear-gradient(135deg, #ff6fb3, #a78bfa);
+    }
+    .stepBtn.minus{
+      background: linear-gradient(135deg, #7dd3fc, #a78bfa);
+    }
+    .bigNumber{
+      flex:1;
+      text-align:center;
+      font-size: 46px;
+      font-weight: 1000;
+      letter-spacing: .5px;
+      color:#2d1d36;
+      text-shadow: 0 10px 24px rgba(255,111,179,.15);
+    }
+    .smallNote{
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height:1.35;
+    }
+
+    .noteBox{
+      margin-top: 12px;
+      padding: 14px;
+      border-radius: var(--radius2);
+      background: rgba(255,255,255,.88);
+      border: 1px solid rgba(255,111,179,.18);
+      box-shadow: var(--shadow);
+    }
+    textarea{
+      width:100%;
+      min-height: 88px;
+      border-radius: 16px;
+      border: 1px solid rgba(167,139,250,.25);
+      padding: 12px;
+      font-size: 14px;
+      outline:none;
+      resize: vertical;
+      background: rgba(255,255,255,.9);
+    }
+    textarea:focus{
+      border-color: rgba(255,111,179,.55);
+      box-shadow: 0 0 0 4px rgba(255,111,179,.12);
+    }
+    .noteLabel{
+      font-weight: 900;
+      color:#4b2b46;
+      margin-bottom: 8px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .noteLabel .mini{
+      font-size:12px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .historyCard{
+      margin-top: 12px;
+      padding: 14px;
+      border-radius: var(--radius2);
+      background: rgba(255,255,255,.86);
+      border: 1px solid rgba(255,111,179,.14);
+      box-shadow: var(--shadow);
+    }
+    .historyTitle{
+      font-weight: 1000;
+      color:#4b2b46;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .historyList{
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      max-height: 34vh;
+      overflow:auto;
+      padding-right: 2px;
+    }
+    .hItem{
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(255,111,179,.10), rgba(167,139,250,.08));
+      border: 1px solid rgba(255,255,255,.9);
+    }
+    .hTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .hRow{
+      font-weight: 1000;
+      color:#2f1a36;
+    }
+    .hTime{
+      font-size: 12px;
+      color: var(--muted);
+      white-space:nowrap;
+    }
+    .hNote{
+      font-size: 13px;
+      color:#3d3147;
+      line-height:1.35;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+    .empty{
+      color: var(--muted);
+      font-size: 13px;
+      line-height:1.35;
+      padding: 6px 2px 2px;
+    }
+
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: calc(18px + var(--safeBottom));
+      transform: translateX(-50%);
+      background: rgba(45, 26, 56, .88);
+      color: white;
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-weight: 800;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+    }
+    .toast.show{
+      opacity: 1;
+      transform: translateX(-50%) translateY(-4px);
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <!-- View: List -->
+    <section class="view active" id="viewList">
+      <div class="topbar">
+        <div class="title">
+          <div class="badge">🧶 钩织记录</div>
+        </div>
+        <button class="btn secondary small" id="btnExport">导出</button>
+      </div>
+
+      <div class="hint">
+        左滑项目可显示「重命名 / 删除」。点击空白处会自动收起左滑操作。
+      </div>
+
+      <div class="list" id="projectList"></div>
+
+      <div class="footerNew">
+        <div class="txt">想新开一个作品？</div>
+        <button class="btn" id="btnNew">＋ 新建钩织项目</button>
+      </div>
+    </section>
+
+    <!-- View: Content -->
+    <section class="view" id="viewContent">
+      <div class="contentHeader">
+        <button class="backBtn" id="btnBack">← 返回</button>
+        <div class="contentTitle" id="contentTitle">项目</div>
+        <button class="btn small" id="btnSave">保存</button>
+      </div>
+
+      <div class="counterCard">
+        <div class="counterRow">
+          <button class="stepBtn minus" id="btnMinus">－</button>
+          <div class="bigNumber" id="rowNumber">1</div>
+          <button class="stepBtn" id="btnPlus">＋</button>
+        </div>
+        <div class="smallNote">当前行数从 1 开始。每次点击加/减，会把“点击前的行数 + 当时备注”记录到下方历史里。</div>
+      </div>
+
+      <div class="noteBox">
+        <div class="noteLabel">
+          <span>备注</span>
+          <span class="mini" id="noteTip">会随进度保存</span>
+        </div>
+        <textarea id="noteInput" placeholder="例如：第12行开始换色 / 加针 / 记号扣位置…"></textarea>
+      </div>
+
+      <div class="historyCard">
+        <div class="historyTitle">
+          <span>历史记录</span>
+          <button class="btn secondary small" id="btnClearHistory">清空历史</button>
+        </div>
+        <div class="historyList" id="historyList"></div>
+        <div class="empty" id="historyEmpty" style="display:none;">还没有记录～ 点击加/减后就会出现在这里。</div>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast">已保存</div>
+
+  <script>
+    /***********************
+     * 数据结构 & 存储
+     ***********************/
+    const LS_KEY = "crochet_projects_v1";
+
+    function uid(){
+      return Math.random().toString(16).slice(2) + Date.now().toString(16);
+    }
+
+    function nowStr(){
+      const d = new Date();
+      const pad = n => String(n).padStart(2,"0");
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+
+    function loadAll(){
+      try{
+        const raw = localStorage.getItem(LS_KEY);
+        if(!raw) return [];
+        const data = JSON.parse(raw);
+        if(!Array.isArray(data)) return [];
+        return data;
+      }catch(e){
+        return [];
+      }
+    }
+
+    function saveAll(list){
+      localStorage.setItem(LS_KEY, JSON.stringify(list));
+    }
+
+    function defaultIconForName(name){
+      // 简单给一些可爱图标轮换
+      const icons = ["🧶","🎀","🩷","🧵","🌸","✨","🫧","🍓","🪡","🐰"];
+      let sum = 0;
+      for (let i=0;i<name.length;i++) sum += name.charCodeAt(i);
+      return icons[sum % icons.length];
+    }
+
+    /***********************
+     * 状态
+     ***********************/
+    let projects = loadAll();
+    if(projects.length === 0){
+      projects = [{
+        id: uid(),
+        name: "我的第一个钩织项目",
+        icon: "🧶",
+        currentRow: 1,
+        note: "",
+        history: [] // {row, note, ts}
+      }];
+      saveAll(projects);
+    }
+
+    let currentProjectId = null;
+
+    /***********************
+     * DOM
+     ***********************/
+    const viewList = document.getElementById("viewList");
+    const viewContent = document.getElementById("viewContent");
+
+    const projectListEl = document.getElementById("projectList");
+    const btnNew = document.getElementById("btnNew");
+    const btnExport = document.getElementById("btnExport");
+
+    const btnBack = document.getElementById("btnBack");
+    const btnSave = document.getElementById("btnSave");
+    const contentTitleEl = document.getElementById("contentTitle");
+    const rowNumberEl = document.getElementById("rowNumber");
+    const btnPlus = document.getElementById("btnPlus");
+    const btnMinus = document.getElementById("btnMinus");
+    const noteInput = document.getElementById("noteInput");
+
+    const historyListEl = document.getElementById("historyList");
+    const historyEmptyEl = document.getElementById("historyEmpty");
+    const btnClearHistory = document.getElementById("btnClearHistory");
+
+    const toastEl = document.getElementById("toast");
+
+    function toast(msg){
+      toastEl.textContent = msg;
+      toastEl.classList.add("show");
+      setTimeout(()=> toastEl.classList.remove("show"), 900);
+    }
+
+    /***********************
+     * 视图切换
+     ***********************/
+    function showList(){
+      viewContent.classList.remove("active");
+      viewList.classList.add("active");
+      currentProjectId = null;
+      renderList();
+    }
+
+    function showContent(projectId){
+      currentProjectId = projectId;
+      const p = projects.find(x=>x.id === projectId);
+      if(!p) return showList();
+
+      viewList.classList.remove("active");
+      viewContent.classList.add("active");
+
+      contentTitleEl.textContent = `${p.icon} ${p.name}`;
+      rowNumberEl.textContent = String(p.currentRow ?? 1);
+      noteInput.value = p.note ?? "";
+
+      renderHistory(p);
+    }
+
+    /***********************
+     * 列表渲染 + 左滑
+     ***********************/
+    let openSwipeId = null;
+
+    function closeOpenSwipe(exceptId=null){
+      if(openSwipeId && openSwipeId !== exceptId){
+        const wrap = document.querySelector(`.swipeWrap[data-id="${openSwipeId}"]`);
+        if(wrap) wrap.classList.remove("open");
+        openSwipeId = null;
+      }
+    }
+
+    function renderList(){
+      projectListEl.innerHTML = "";
+
+      projects.forEach(p=>{
+        const wrap = document.createElement("div");
+        wrap.className = "swipeWrap";
+        wrap.dataset.id = p.id;
+
+        const actions = document.createElement("div");
+        actions.className = "swipeActions";
+        actions.innerHTML = `
+          <button class="btn secondary small" data-act="rename">重命名</button>
+          <button class="btn danger small" data-act="delete">删除</button>
+        `;
+
+        const front = document.createElement("div");
+        front.className = "swipeFront";
+        front.innerHTML = `
+          <div class="icon">${escapeHtml(p.icon || "🧶")}</div>
+          <div class="projMeta">
+            <div class="projName">${escapeHtml(p.name || "未命名项目")}</div>
+            <div class="projRow">当前行数：<b>${Number(p.currentRow || 1)}</b></div>
+          </div>
+          <button class="editBtn" data-act="edit">编辑</button>
+        `;
+
+        wrap.appendChild(actions);
+        wrap.appendChild(front);
+        projectListEl.appendChild(wrap);
+
+        // 点击操作
+        actions.addEventListener("click", (e)=>{
+          const btn = e.target.closest("button");
+          if(!btn) return;
+          const act = btn.dataset.act;
+          if(act === "rename") renameProject(p.id);
+          if(act === "delete") deleteProject(p.id);
+        });
+
+        front.addEventListener("click", (e)=>{
+          const actBtn = e.target.closest("button");
+          if(actBtn && actBtn.dataset.act === "edit"){
+            closeOpenSwipe();
+            showContent(p.id);
+            return;
+          }
+          // 点卡片其他位置：如果已左滑打开则收起，否则进入编辑也可以（更顺手）
+          if(wrap.classList.contains("open")){
+            wrap.classList.remove("open");
+            openSwipeId = null;
+          }else{
+            closeOpenSwipe();
+            showContent(p.id);
+          }
+        });
+
+        // 左滑手势
+        attachSwipeHandlers(wrap, front, p.id);
+      });
+
+      // 点击空白处收起左滑
+      //（避免点到按钮时也触发，因此用捕获+判定）
+      document.addEventListener("pointerdown", onGlobalPointerDown, {capture:true});
+    }
+
+    function onGlobalPointerDown(e){
+      // 只在列表页处理
+      if(!viewList.classList.contains("active")) return;
+
+      const inSwipe = e.target.closest(".swipeWrap");
+      if(!inSwipe){
+        closeOpenSwipe();
+        return;
+      }
+      // 点击另一个卡片：收起之前打开的
+      const id = inSwipe.dataset.id;
+      closeOpenSwipe(id);
+    }
+
+    function attachSwipeHandlers(wrap, front, id){
+      let startX = 0, startY = 0, dx = 0, dy = 0;
+      let active = false;
+
+      function onTouchStart(ev){
+        if(!viewList.classList.contains("active")) return;
+        const t = (ev.touches && ev.touches[0]) ? ev.touches[0] : ev;
+        startX = t.clientX;
+        startY = t.clientY;
+        dx = dy = 0;
+        active = true;
+      }
+
+      function onTouchMove(ev){
+        if(!active) return;
+        const t = (ev.touches && ev.touches[0]) ? ev.touches[0] : ev;
+        dx = t.clientX - startX;
+        dy = t.clientY - startY;
+
+        // 主要为横向滑动才接管
+        if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10){
+          ev.preventDefault?.();
+          // 左滑：dx为负
+          if(dx < -30){
+            closeOpenSwipe(id);
+            wrap.classList.add("open");
+            openSwipeId = id;
+          }
+          // 右滑：收起
+          if(dx > 30){
+            wrap.classList.remove("open");
+            if(openSwipeId === id) openSwipeId = null;
+          }
+        }
+      }
+
+      function onTouchEnd(){
+        active = false;
+      }
+
+      // touch + pointer 都加一份，适配更多浏览器
+      front.addEventListener("touchstart", onTouchStart, {passive:true});
+      front.addEventListener("touchmove", onTouchMove, {passive:false});
+      front.addEventListener("touchend", onTouchEnd, {passive:true});
+
+      front.addEventListener("pointerdown", onTouchStart);
+      front.addEventListener("pointermove", onTouchMove);
+      front.addEventListener("pointerup", onTouchEnd);
+      front.addEventListener("pointercancel", onTouchEnd);
+    }
+
+    function renameProject(id){
+      const p = projects.find(x=>x.id === id);
+      if(!p) return;
+      const name = prompt("给项目起个新名字：", p.name || "");
+      if(name === null) return;
+      const trimmed = name.trim();
+      if(!trimmed){
+        toast("名字不能为空");
+        return;
+      }
+      p.name = trimmed;
+      if(!p.icon) p.icon = defaultIconForName(trimmed);
+      saveAll(projects);
+      renderList();
+      toast("已重命名");
+    }
+
+    function deleteProject(id){
+      const p = projects.find(x=>x.id === id);
+      if(!p) return;
+      const ok = confirm(`确定删除「${p.name}」吗？此操作不可恢复。`);
+      if(!ok) return;
+      projects = projects.filter(x=>x.id !== id);
+      if(projects.length === 0){
+        projects = [{
+          id: uid(),
+          name: "新的钩织项目",
+          icon: "🧶",
+          currentRow: 1,
+          note: "",
+          history: []
+        }];
+      }
+      saveAll(projects);
+      closeOpenSwipe();
+      renderList();
+      toast("已删除");
+    }
+
+    function createProject(){
+      const name = prompt("新项目名称：", `钩织项目 ${projects.length + 1}`);
+      if(name === null) return;
+      const trimmed = name.trim();
+      if(!trimmed){
+        toast("名字不能为空");
+        return;
+      }
+      const p = {
+        id: uid(),
+        name: trimmed,
+        icon: defaultIconForName(trimmed),
+        currentRow: 1,
+        note: "",
+        history: []
+      };
+      projects.unshift(p);
+      saveAll(projects);
+      renderList();
+      toast("已创建");
+    }
+
+    /***********************
+     * 内容页：计数器 & 历史
+     ***********************/
+    function getCurrentProject(){
+      return projects.find(x=>x.id === currentProjectId);
+    }
+
+    function renderHistory(p){
+      const history = Array.isArray(p.history) ? p.history : [];
+      historyListEl.innerHTML = "";
+      historyEmptyEl.style.display = history.length ? "none" : "block";
+
+      // 最新在上
+      history.slice().reverse().forEach(item=>{
+        const div = document.createElement("div");
+        div.className = "hItem";
+        div.innerHTML = `
+          <div class="hTop">
+            <div class="hRow">行数：${Number(item.row)}</div>
+            <div class="hTime">${escapeHtml(item.ts || "")}</div>
+          </div>
+          <div class="hNote">${escapeHtml(item.note || "（无备注）")}</div>
+        `;
+        historyListEl.appendChild(div);
+      });
+    }
+
+    function recordSnapshot(p){
+      const rowBefore = Number(p.currentRow || 1);
+      const noteBefore = String(noteInput.value || "");
+      if(!Array.isArray(p.history)) p.history = [];
+      p.history.push({ row: rowBefore, note: noteBefore, ts: nowStr() });
+    }
+
+    function clampRow(n){
+      if(!Number.isFinite(n)) return 1;
+      return Math.max(1, Math.floor(n));
+    }
+
+    function onPlus(){
+      const p = getCurrentProject();
+      if(!p) return;
+      recordSnapshot(p);
+      p.currentRow = clampRow(Number(p.currentRow || 1) + 1);
+      p.note = String(noteInput.value || "");
+      rowNumberEl.textContent = String(p.currentRow);
+      renderHistory(p);
+      saveAll(projects); // 实时保存，防止刷新丢失
+    }
+
+    function onMinus(){
+      const p = getCurrentProject();
+      if(!p) return;
+      recordSnapshot(p);
+      p.currentRow = clampRow(Number(p.currentRow || 1) - 1);
+      p.note = String(noteInput.value || "");
+      rowNumberEl.textContent = String(p.currentRow);
+      renderHistory(p);
+      saveAll(projects);
+    }
+
+    function onSave(){
+      const p = getCurrentProject();
+      if(!p) return;
+      p.currentRow = clampRow(Number(rowNumberEl.textContent || p.currentRow || 1));
+      p.note = String(noteInput.value || "");
+      saveAll(projects);
+      toast("已保存");
+    }
+
+    function clearHistory(){
+      const p = getCurrentProject();
+      if(!p) return;
+      const ok = confirm("确定清空该项目的历史记录吗？（不会影响当前行数）");
+      if(!ok) return;
+      p.history = [];
+      saveAll(projects);
+      renderHistory(p);
+      toast("已清空");
+    }
+
+    /***********************
+     * 导出
+     ***********************/
+    function exportData(){
+      const data = { exportedAt: nowStr(), projects };
+      const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json;charset=utf-8"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `钩织记录_导出_${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast("已导出");
+    }
+
+    /***********************
+     * 工具：HTML 转义
+     ***********************/
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    /***********************
+     * 事件绑定
+     ***********************/
+    btnNew.addEventListener("click", createProject);
+    btnExport.addEventListener("click", exportData);
+
+    btnBack.addEventListener("click", ()=>{
+      // 保存一下再返回
+      const p = getCurrentProject();
+      if(p){
+        p.note = String(noteInput.value || "");
+        saveAll(projects);
+      }
+      showList();
+    });
+
+    btnPlus.addEventListener("click", onPlus);
+    btnMinus.addEventListener("click", onMinus);
+    btnSave.addEventListener("click", onSave);
+    btnClearHistory.addEventListener("click", clearHistory);
+
+    // 备注输入实时写入当前项目（不强制每次按键保存到localStorage，减少写入；但离开/加减会保存）
+    noteInput.addEventListener("input", ()=>{
+      const p = getCurrentProject();
+      if(!p) return;
+      p.note = String(noteInput.value || "");
+    });
+
+    /***********************
+     * 初始化
+     ***********************/
+    renderList();
+  </script>
+</body>
+</html>
