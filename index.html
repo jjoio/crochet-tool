@@ -397,7 +397,7 @@
           <div class="num" id="rowNum">1</div>
           <button class="step" id="plusBtn">+</button>
         </div>
-        <div class="tip">当前行数从 1 开始，每次点击加减按钮，都会记录点击前的行数和当时备注。</div>
+        <div class="tip">当前行数从 1 开始。点击“+”会记录当前行数和备注并清空备注；点击“-”会删除最新一条历史记录。</div>
       </div>
 
       <div class="panel note-panel">
@@ -753,12 +753,15 @@
     function onMinus() {
       const p = currentProject();
       if (!p) return;
-      addHistorySnapshot(p);
+      p.history = Array.isArray(p.history) ? p.history : [];
+      if (!p.history.length) {
+        showToast("没有可删除的历史记录");
+        return;
+      }
+      p.history.pop();
       p.currentRow = clampRow(p.currentRow - 1);
       rowNum.textContent = String(p.currentRow);
       renderHistory(p);
-      noteInput.value = "";
-      p.note = "";
       persist();
     }
 
