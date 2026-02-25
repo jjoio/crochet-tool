@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>钩织记录</title>
   <style>
     :root {
@@ -23,11 +23,18 @@
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
+    html, body {
+      height: 100%;
+      overscroll-behavior-y: none;
+    }
+
     body {
       margin: 0;
       font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
       color: var(--text);
       min-height: 100vh;
+      overflow-x: hidden;
+      touch-action: manipulation;
       background:
         radial-gradient(120vw 60vh at 15% -5%, #ffd8ea 0, transparent 55%),
         radial-gradient(120vw 70vh at 100% 0%, #e7dcff 0, transparent 55%),
@@ -136,10 +143,11 @@
 
     .swipe-front {
       position: relative;
+      z-index: 1;
       display: flex;
       align-items: center;
       gap: 10px;
-      background: rgba(255, 255, 255, 0.95);
+      background: #ffffff;
       border: 1px solid rgba(255, 255, 255, 0.9);
       border-radius: 20px;
       box-shadow: 0 10px 24px rgba(122, 90, 139, 0.11);
@@ -204,7 +212,7 @@
       flex-direction: column;
       align-items: stretch;
       gap: 8px;
-      padding-top: 24px;
+      padding-top: 6px;
       margin-bottom: 10px;
     }
 
@@ -448,6 +456,7 @@
     let currentId = null;
     let openedSwipeId = null;
     let globalPointerBound = false;
+    let storageErrorNotified = false;
 
     function uid() {
       return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -496,7 +505,17 @@
     }
 
     function persist() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+        storageErrorNotified = false;
+        return true;
+      } catch {
+        if (!storageErrorNotified) {
+          showToast("保存失败：本地存储空间不足");
+          storageErrorNotified = true;
+        }
+        return false;
+      }
     }
 
     function currentProject() {
@@ -573,14 +592,16 @@
         tracking = false;
       }
 
-      front.addEventListener("touchstart", start, { passive: true });
-      front.addEventListener("touchmove", move, { passive: false });
-      front.addEventListener("touchend", end, { passive: true });
-
-      front.addEventListener("pointerdown", start);
-      front.addEventListener("pointermove", move);
-      front.addEventListener("pointerup", end);
-      front.addEventListener("pointercancel", end);
+      if (window.PointerEvent) {
+        front.addEventListener("pointerdown", start);
+        front.addEventListener("pointermove", move);
+        front.addEventListener("pointerup", end);
+        front.addEventListener("pointercancel", end);
+      } else {
+        front.addEventListener("touchstart", start, { passive: true });
+        front.addEventListener("touchmove", move, { passive: false });
+        front.addEventListener("touchend", end, { passive: true });
+      }
     }
 
     function renderList() {
@@ -776,6 +797,18 @@
       const p = currentProject();
       if (!p) return;
       p.note = String(noteInput.value || "");
+    });
+
+    // 防止移动端双击导致页面缩放/位移
+    let lastTouchEndAt = 0;
+    document.addEventListener("touchend", e => {
+      const now = Date.now();
+      if (now - lastTouchEndAt < 300) e.preventDefault();
+      lastTouchEndAt = now;
+    }, { passive: false });
+
+    document.addEventListener("dblclick", e => {
+      e.preventDefault();
     });
 
     renderList();
