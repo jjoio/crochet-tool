@@ -310,6 +310,13 @@
       overflow: hidden;
     }
 
+    @media (max-width: 760px) {
+      /* iOS 上输入框小于 16px 容易触发页面缩放与跳动 */
+      #patternText {
+        font-size: 16px;
+      }
+    }
+
     textarea:focus,
     .dialog-input:focus {
       border-color: #ff8fc8;
@@ -1263,16 +1270,16 @@
     }
 
     function autoResizePatternText() {
-      const prevHeight = patternText.offsetHeight;
+      const prevTop = patternText.getBoundingClientRect().top;
       patternText.style.height = "auto";
       const nextHeight = Math.max(patternText.scrollHeight, 110);
       patternText.style.height = `${nextHeight}px`;
 
-      // iOS/移动端在删除文本导致高度收缩时，容器会出现“向上弹一下”的观感。
-      // 通过按高度差补偿滚动，保持视觉位置稳定。
-      const delta = nextHeight - prevHeight;
-      if (delta !== 0 && patternView.classList.contains("active")) {
-        patternView.scrollTop += delta;
+      // 让输入框顶部尽量固定在同一视觉位置，减少输入/删除时页面跳动。
+      if (patternView.classList.contains("active")) {
+        const newTop = patternText.getBoundingClientRect().top;
+        const shift = newTop - prevTop;
+        if (shift !== 0) patternView.scrollTop += shift;
       }
     }
 
